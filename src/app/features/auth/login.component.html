@@ -1,0 +1,40 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>Gym Tracker</h1>
+    <h2>Logowanie</h2>
+    
+    @if (errorMessage()) {
+      <div class="alert error">{{ errorMessage() }}</div>
+    }
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="email">Adres e-mail</label>
+        <input id="email" type="email" formControlName="email" placeholder="Wprowadź e-mail" />
+      </div>
+
+      <button type="submit" class="btn primary" [disabled]="loginForm.invalid || loading()">
+        {{ loading() ? 'Logowanie...' : 'Zaloguj się' }}
+      </button>
+    </form>
+
+    <div class="auth-links">
+      <p>Nie masz konta? <a routerLink="/register">Zarejestruj się</a></p>
+    </div>
+
+    @if (users().length > 0) {
+      <div class="quick-users">
+        <h3>Szybkie logowanie (lokalni użytkownicy):</h3>
+        <ul>
+          @for (u of users(); track u.id) {
+            <li>
+              <button type="button" class="btn-link" (click)="quickLogin(u.email)">
+                {{ u.username }} ({{ u.email }})
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>Gym Tracker</h1>
+    <h2>Rejestracja</h2>
+    
+    @if (errorMessage()) {
+      <div class="alert error">{{ errorMessage() }}</div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username">Nazwa użytkownika</label>
+        <input id="username" type="text" formControlName="username" placeholder="Wprowadź nazwę" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Adres e-mail</label>
+        <input id="email" type="email" formControlName="email" placeholder="Wprowadź e-mail" />
+      </div>
+
+      <button type="submit" class="btn primary" [disabled]="registerForm.invalid || loading()">
+        {{ loading() ? 'Rejestrowanie...' : 'Zarejestruj się' }}
+      </button>
+    </form>
+
+    <div class="auth-links">
+      <p>Masz już konto? <a routerLink="/login">Zaloguj się</a></p>
+    </div>
+  </div>
+</div>
