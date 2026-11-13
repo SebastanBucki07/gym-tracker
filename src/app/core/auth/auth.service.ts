@@ -16,7 +16,55 @@ export class AuthService {
   isAuthenticated = computed(() => !!this.currentUserSignal());
 
   constructor() {
+    this.initAuth();
+  }
+
+  private async initAuth() {
+    await this.seedInitialUsersIfNeeded();
     this.restoreSession();
+  }
+
+  private async seedInitialUsersIfNeeded() {
+    try {
+      const all = await this.userRepository.getAll('');
+      if (all.length === 0) {
+        const user1: User = {
+          id: 'user_jan_1',
+          username: 'Jan Kowalski',
+          email: 'jan@example.com',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        const user2: User = {
+          id: 'user_anna_2',
+          username: 'Anna Nowak',
+          email: 'anna@example.com',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        await this.userRepository.create(user1);
+        await this.userRepository.create(user2);
+
+        await this.settingsRepository.upsert({
+          id: 'settings_user_jan_1',
+          userId: user1.id,
+          theme: 'dark',
+          weightUnit: 'kg',
+          measurementUnit: 'cm',
+          distanceUnit: 'km'
+        });
+        await this.settingsRepository.upsert({
+          id: 'settings_user_anna_2',
+          userId: user2.id,
+          theme: 'dark',
+          weightUnit: 'kg',
+          measurementUnit: 'cm',
+          distanceUnit: 'km'
+        });
+      }
+    } catch (e) {
+      console.error('Failed to seed initial users', e);
+    }
   }
 
   private restoreSession() {
