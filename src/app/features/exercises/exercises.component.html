@@ -1,0 +1,112 @@
+<div class="exercises-container">
+  <header class="exercises-header">
+    <h2>Katalog Ćwiczeń</h2>
+    <button class="btn primary" (click)="openCreateModal()">+ Dodaj własne ćwiczenie</button>
+  </header>
+
+  <div class="filters-bar">
+    <input 
+      type="text" 
+      placeholder="Szukaj ćwiczenia..." 
+      [value]="searchQuery()"
+      (input)="onSearchChange($event)"
+      class="search-input"
+    />
+
+    <select [value]="selectedMuscleGroup()" (change)="onMuscleGroupChange($event)" class="filter-select">
+      <option value="">Wszystkie grupy mięśniowe</option>
+      @for (mg of muscleGroups(); track mg.id) {
+        <option [value]="mg.id">{{ mg.name }}</option>
+      }
+    </select>
+
+    <select [value]="selectedEquipment()" (change)="onEquipmentChange($event)" class="filter-select">
+      <option value="">Cały sprzęt</option>
+      @for (eq of equipmentCategories(); track eq.id) {
+        <option [value]="eq.id">{{ eq.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="exercises-grid">
+    @for (ex of filteredExercises(); track ex.id) {
+      <div class="exercise-card" (click)="selectExercise(ex)">
+        <div class="card-header">
+          <h3>{{ ex.name }}</h3>
+          <span class="badge" [class.user]="ex.source === 'user'">
+            {{ ex.source === 'system' ? 'Systemowe' : 'Własne' }}
+          </span>
+        </div>
+        <p class="description">{{ ex.description || 'Brak opisu.' }}</p>
+        <div class="card-footer">
+          <span class="tag">Mięsień: {{ getMuscleGroupName(ex.primaryMuscleGroupId) }}</span>
+          <span class="tag">Sprzęt: {{ getEquipmentName(ex.equipmentCategoryId) }}</span>
+        </div>
+      </div>
+    } @empty {
+      <p class="empty-state">Brak ćwiczeń spełniających kryteria wyszukiwania.</p>
+    }
+  </div>
+
+  @if (selectedExercise()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>{{ selectedExercise()?.name }}</h3>
+        <p><strong>Opis:</strong> {{ selectedExercise()?.description || 'Brak' }}</p>
+        <p><strong>Główna partia:</strong> {{ getMuscleGroupName(selectedExercise()!.primaryMuscleGroupId) }}</p>
+        <p><strong>Sprzęt:</strong> {{ getEquipmentName(selectedExercise()!.equipmentCategoryId) }}</p>
+        
+        @if (selectedExercise()?.source === 'user' && selectedExercise()?.userId === currentUserId()) {
+          <div class="modal-actions">
+            <button class="btn danger" (click)="deactivateExercise(selectedExercise()!)">Dezaktywuj</button>
+          </div>
+        }
+
+        <button class="btn secondary" (click)="closeModal()">Zamknij</button>
+      </div>
+    </div>
+  }
+
+  @if (isCreatingCustom()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Dodaj własne ćwiczenie</h3>
+        
+        <form [formGroup]="customForm" (ngSubmit)="saveCustomExercise()">
+          <div class="form-group">
+            <label>Nazwa ćwiczenia</label>
+            <input type="text" formControlName="name" placeholder="np. Wyciskanie hantli pod skosem" />
+          </div>
+
+          <div class="form-group">
+            <label>Opis</label>
+            <textarea formControlName="description" placeholder="Opis techniki wykonania..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Główna grupa mięśniowa</label>
+            <select formControlName="primaryMuscleGroupId">
+              @for (mg of muscleGroups(); track mg.id) {
+                <option [value]="mg.id">{{ mg.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Sprzęt</label>
+            <select formControlName="equipmentCategoryId">
+              @for (eq of equipmentCategories(); track eq.id) {
+                <option [value]="eq.id">{{ eq.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn primary" [disabled]="customForm.invalid">Zapisz</button>
+            <button type="button" class="btn secondary" (click)="closeCreateModal()">Anuluj</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

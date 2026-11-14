@@ -9,7 +9,10 @@
         </div>
       }
     </div>
-    <button class="btn logout" (click)="logout()">Wyloguj się</button>
+    <div class="header-actions">
+      <a routerLink="/exercises" class="btn link-btn">Katalog Ćwiczeń</a>
+      <button class="btn logout" (click)="logout()">Wyloguj się</button>
+    </div>
   </header>
 
   <main class="dashboard-content">

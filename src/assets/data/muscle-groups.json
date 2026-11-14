@@ -1,0 +1,14 @@
+[
+  { "id": "chest", "name": "Klatka piersiowa", "description": "Ćwiczenia angażujące mięśnie piersiowe większe i mniejsze." },
+  { "id": "back", "name": "Plecy", "description": "Mięśnie najszersze grzbietu, czworoboczne oraz prostowniki." },
+  { "id": "shoulders", "name": "Barki", "description": "Mięśnie naramienne (przedni, boczny, tylny akton)." },
+  { "id": "biceps", "name": "Biceps", "description": "Dwugłowy ramienia." },
+  { "id": "triceps", "name": "Triceps", "description": "Trójgłowy ramienia." },
+  { "id": "forearms", "name": "Przedramiona", "description": "Zginacze i prostowniki przedramienia." },
+  { "id": "abs", "name": "Brzuch", "description": "Mięśnie proste i skośne brzucha." },
+  { "id": "glutes", "name": "Pośladki", "description": "Mięśnie pośladkowe wielkie, średnie i małe." },
+  { "id": "quadriceps", "name": "Czworogłowe uda", "description": "Przednia partia mięśniowa nóg." },
+  { "id": "hamstrings", "name": "Dwugłowe uda", "description": "Tylna partia mięśniowa ud (kulszowo-goleniowe)." },
+  { "id": "calves", "name": "Łydki", "description": "Mięśnie brzuchate i płaszczkowate podudzia." },
+  { "id": "traps", "name": "Czworoboczne", "description": "Mięśnie kapturowe." }
+]
