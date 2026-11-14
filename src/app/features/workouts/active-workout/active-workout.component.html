@@ -1,0 +1,181 @@
+<div class="active-workout-container">
+  <!-- Header Bar -->
+  <header class="workout-header">
+    <div class="workout-info">
+      <h2>{{ activeWorkoutService.activeWorkout()?.name || 'Trening aktywny' }}</h2>
+      <div class="metrics">
+        <span class="timer">⏱️ {{ formatTime(activeWorkoutService.elapsedSeconds()) }}</span>
+        <span class="volume">🏋️ Tonaż: {{ activeWorkoutService.totalVolume() }} kg</span>
+        <span class="sets">✅ Serie: {{ activeWorkoutService.completedSetsCount() }}/{{ activeWorkoutService.totalSetsCount() }}</span>
+      </div>
+    </div>
+    <div class="workout-actions">
+      <button class="btn primary" (click)="openAddExerciseModal()">+ Dodaj ćwiczenie</button>
+      <button class="btn success" (click)="finishWorkout()">Zakończ trening</button>
+      <button class="btn danger" (click)="discard()">Porzuć</button>
+    </div>
+  </header>
+
+  <!-- Exercises List -->
+  <div class="exercises-content">
+    @for (ex of activeWorkoutService.workoutExercises(); track ex.clientId; let exIdx = $index) {
+      <div class="exercise-block card">
+        <div class="exercise-block-header">
+          <h3>{{ ex.exerciseName }}</h3>
+          <div class="block-actions">
+            <button class="btn-icon" title="Powtórz ćwiczenie" (click)="activeWorkoutService.repeatExercise(ex.clientId)">🔄</button>
+            <button class="btn-icon danger" title="Usuń ćwiczenie" (click)="activeWorkoutService.removeExercise(ex.clientId)">🗑️</button>
+          </div>
+        </div>
+
+        <div class="sets-table-wrapper">
+          <table class="sets-table">
+            <thead>
+              <tr>
+                <th>Seria</th>
+                <th>kg</th>
+                <th>Powtórzenia</th>
+                <th>Rozgrzewka</th>
+                <th>Ukończono</th>
+                <th>Akcje</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (set of ex.sets; track set.id; let setIdx = $index) {
+                <tr [class.completed]="set.isCompleted" [class.warmup]="set.isWarmup">
+                  <td class="set-number">#{{ set.setNumber }}</td>
+                  <td>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      step="0.5" 
+                      [(ngModel)]="set.weight" 
+                      (ngModelChange)="activeWorkoutService.updateSet(ex.clientId, set.id, { weight: $event })"
+                      class="input-number"
+                    />
+                  </td>
+                  <td>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      step="1" 
+                      [(ngModel)]="set.repetitions" 
+                      (ngModelChange)="activeWorkoutService.updateSet(ex.clientId, set.id, { repetitions: $event })"
+                      class="input-number"
+                    />
+                  </td>
+                  <td class="text-center">
+                    <input 
+                      type="checkbox" 
+                      [checked]="set.isWarmup" 
+                      (change)="activeWorkoutService.toggleSetWarmup(ex.clientId, set.id)"
+                      title="Seria rozgrzewkowa"
+                    />
+                  </td>
+                  <td class="text-center">
+                    <button 
+                      class="btn-check" 
+                      [class.active]="set.isCompleted"
+                      (click)="activeWorkoutService.toggleSetCompleted(ex.clientId, set.id)"
+                    >
+                      {{ set.isCompleted ? '✓' : 'O' }}
+                    </button>
+                  </td>
+                  <td class="text-center">
+                    <button class="btn-icon danger sm" (click)="activeWorkoutService.removeSet(ex.clientId, set.id)">×</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="exercise-block-footer">
+          <button class="btn secondary sm" (click)="activeWorkoutService.addSet(ex.clientId)">+ Dodaj serię</button>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-workout">
+        <p>Brak ćwiczeń w treningu. Kliknij "+ Dodaj ćwiczenie", aby rozpocząć.</p>
+        <button class="btn primary" (click)="openAddExerciseModal()">+ Dodaj ćwiczenie</button>
+      </div>
+    }
+  </div>
+
+  <!-- Add Exercise Modal -->
+  @if (showAddExerciseModal()) {
+    <div class="modal-backdrop" (click)="closeAddExerciseModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Wybierz ćwiczenie</h3>
+        
+        <div class="modal-filters">
+          <input 
+            type="text" 
+            placeholder="Szukaj..." 
+            [value]="searchQuery()"
+            (input)="onSearchChange($event)"
+            class="search-input"
+          />
+
+          <select [value]="selectedMuscleGroup()" (change)="onMuscleGroupFilter($any($event.target).value)" class="filter-select">
+            <option value="">Wszystkie partie</option>
+            @for (mg of muscleGroups(); track mg.id) {
+              <option [value]="mg.id">{{ mg.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="catalog-list">
+          @for (ex of filteredCatalog(); track ex.id) {
+            <div class="catalog-item" (click)="selectExerciseToAdd(ex)">
+              <div class="item-info">
+                <h4>{{ ex.name }}</h4>
+                <span class="tag">{{ getMuscleGroupName(ex.primaryMuscleGroupId) }}</span>
+              </div>
+              <button class="btn primary sm">Wybierz</button>
+            </div>
+          } @empty {
+            <p class="empty">Brak ćwiczeń w katalogu.</p>
+          }
+        </div>
+
+        <button class="btn secondary mt-3" (click)="closeAddExerciseModal()">Zamknij</button>
+      </div>
+    </div>
+  }
+
+ <!-- Summary Modal -->
+@if (showSummaryModal() && summaryData()) {
+  <div class="modal-backdrop">
+    <div class="modal-content text-center">
+      <h2>🎉 Trening ukończony!</h2>
+      <p>Gratulacje! Twój trening został pomyślnie zapisany w historii.</p>
+
+      <div class="summary-stats">
+        <div class="stat-box">
+          <span>Czas trwania</span>
+          <strong>{{ formatTime(summaryData()!.elapsedSeconds) }}</strong>
+        </div>
+
+        <div class="stat-box">
+          <span>Łączny tonaż</span>
+          <strong>{{ summaryData()!.totalVolume }} kg</strong>
+        </div>
+
+        <div class="stat-box">
+          <span>Ukończone serie</span>
+          <strong>
+            {{ summaryData()!.completedSetsCount }}
+            /
+            {{ summaryData()!.totalSetsCount }}
+          </strong>
+        </div>
+      </div>
+
+      <button class="btn primary mt-3" (click)="closeSummary()">
+        Przejdź do pulpitu
+      </button>
+    </div>
+  </div>
+}
+</div>
