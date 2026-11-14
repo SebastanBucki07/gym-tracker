@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto';
 import Dexie, { Table } from 'dexie';
 import { User } from '../contracts/user.model';
 import { Exercise } from '../contracts/exercise.model';

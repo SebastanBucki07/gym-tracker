@@ -1,0 +1,9 @@
+[
+  { "id": "barbell", "name": "Sztanga" },
+  { "id": "dumbbell", "name": "Hantle" },
+  { "id": "machine", "name": "Maszyny" },
+  { "id": "cable", "name": "Wyciągi" },
+  { "id": "bodyweight", "name": "Masa własnego ciała" },
+  { "id": "kettlebell", "name": "Kettlebell" },
+  { "id": "resistance-band", "name": "Gumy oporowe" }
+]

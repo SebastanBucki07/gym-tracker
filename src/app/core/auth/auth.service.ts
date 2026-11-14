@@ -2,6 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { User } from '../../data-access/contracts/user.model';
 import { LocalUserRepository } from '../../data-access/local/local-user.repository';
 import { LocalSettingsRepository } from '../../data-access/local/local-settings.repository';
+import { DatabaseSeedService } from '../database/database-seed.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,7 @@ import { LocalSettingsRepository } from '../../data-access/local/local-settings.
 export class AuthService {
   private userRepository = new LocalUserRepository();
   private settingsRepository = new LocalSettingsRepository();
+  private seedService = new DatabaseSeedService();
 
   private currentUserSignal = signal<User | null>(null);
 
@@ -20,6 +22,7 @@ export class AuthService {
   }
 
   private async initAuth() {
+    await this.seedService.seedDatabase();
     await this.seedInitialUsersIfNeeded();
     this.restoreSession();
   }
