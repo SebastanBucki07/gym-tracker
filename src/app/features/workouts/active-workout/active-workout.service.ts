@@ -9,6 +9,7 @@ export interface ActiveWorkoutExercise {
   clientId: string;
   exerciseId: string;
   exerciseName: string;
+  primaryMuscleGroupId?: string;
   order: number;
   sets: WorkoutSet[];
 }
@@ -152,6 +153,9 @@ export class ActiveWorkoutService {
           exerciseName: exerciseDef
             ? exerciseDef.name
             : 'Ćwiczenie',
+          primaryMuscleGroupId: exerciseDef
+            ? exerciseDef.primaryMuscleGroupId
+            : undefined,
           order: index,
           sets
         };
@@ -175,6 +179,7 @@ export class ActiveWorkoutService {
       clientId: this.generateId('ex_item'),
       exerciseId: exercise.id,
       exerciseName: exercise.name,
+      primaryMuscleGroupId: exercise.primaryMuscleGroupId,
       order: currentExs.length,
       sets: [
         {
@@ -515,7 +520,9 @@ export class ActiveWorkoutService {
         allSets.push({
           ...set,
           id,
-          workoutId: workout.id
+          workoutId: workout.id,
+          exerciseName: ex.exerciseName,
+          primaryMuscleGroupId: ex.primaryMuscleGroupId
         });
       }
     }

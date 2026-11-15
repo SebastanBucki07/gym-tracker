@@ -2,6 +2,8 @@ export interface WorkoutSet {
   id: string;
   workoutId: string;
   exerciseId: string;
+  exerciseName?: string; // Historical snapshot
+  primaryMuscleGroupId?: string; // Historical snapshot
   setNumber: number;
   weight: number; // in kg
   repetitions: number;

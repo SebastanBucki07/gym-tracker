@@ -29,6 +29,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/workouts/active-workout/active-workout.component').then(m => m.ActiveWorkoutComponent)
   },
   {
+    path: 'workouts/history',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/workouts/history/workout-history.component').then(m => m.WorkoutHistoryComponent)
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full'
