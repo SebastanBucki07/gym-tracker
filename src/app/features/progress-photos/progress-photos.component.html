@@ -1,0 +1,100 @@
+<div class="photos-container">
+  <header class="photos-header">
+    <div class="header-title">
+      <a routerLink="/dashboard" class="back-link">← Panel główny</a>
+      <h2>Zdjęcia sylwetkowe i progres</h2>
+    </div>
+    @if (photos().length >= 2) {
+      <button class="btn secondary" (click)="startComparison()">⚖️ Porównaj zdjęcia</button>
+    }
+  </header>
+
+  <div class="upload-section">
+    <h3>Dodaj nowe zdjęcie sylwetki</h3>
+    <form (submit)="uploadPhoto($event)" class="upload-form">
+      <div class="form-group">
+        <label>Zdjęcie:</label>
+        <input type="file" accept="image/*" (change)="onFileSelected($event)" required />
+      </div>
+      <div class="form-group">
+        <label>Data:</label>
+        <input type="date" [ngModel]="photoDate()" (ngModelChange)="photoDate.set($event)" name="photoDate" required />
+      </div>
+      <div class="form-group">
+        <label>Notatka (opcjonalnie):</label>
+        <input type="text" placeholder="np. Po cyklu masowym, waga 78kg" [ngModel]="photoNotes()" (ngModelChange)="photoNotes.set($event)" name="photoNotes" />
+      </div>
+      <button type="submit" class="btn primary" [disabled]="!selectedFile()">Dodaj zdjęcie</button>
+    </form>
+  </div>
+
+  <div class="gallery-section">
+    <h3>Historia zdjęć</h3>
+    @if (loading()) {
+      <p class="loading-text">Ładowanie zdjęć...</p>
+    } @else if (photos().length === 0) {
+      <div class="empty-state">
+        <p>Brak zdjęć sylwetkowych w historii. Dodaj pierwsze zdjęcie powyżej!</p>
+      </div>
+    } @else {
+      <div class="gallery-grid">
+        @for (photo of photos(); track photo.id) {
+          <div class="photo-card">
+            <div class="image-wrapper">
+              <img [src]="photo.safeUrl" alt="Zdjęcie sylwetkowe" />
+            </div>
+            <div class="photo-meta">
+              <p class="photo-date">📅 {{ formatDate(photo.takenAt) }}</p>
+              @if (photo.notes) {
+                <p class="photo-notes">💬 {{ photo.notes }}</p>
+              }
+              <button class="btn-delete" (click)="deletePhoto(photo.id)">🗑️ Usuń</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isComparing()) {
+    <div class="modal-backdrop" (click)="closeComparison()">
+      <div class="modal-content comparison-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Porównanie sylwetki</h3>
+          <button class="close-btn" (click)="closeComparison()">✕</button>
+        </div>
+        <div class="modal-body comparison-grid">
+          @if (comparePhoto1(); as p1) {
+            <div class="compare-pane">
+              <h4>Przed</h4>
+              <img [src]="p1.safeUrl" alt="Przed" />
+              <p>📅 {{ formatDate(p1.takenAt) }}</p>
+              @if (p1.notes) {<p>💬 {{ p1.notes }}</p>}
+              <select [ngModel]="p1.id" (ngModelChange)="comparePhoto1.set(photos().find(x => x.id === $event) || null)">
+                @for (photo of photos(); track photo.id) {
+                  <option [value]="photo.id">{{ formatDate(photo.takenAt) }} @if(photo.notes){- {{photo.notes}}}</option>
+                }
+              </select>
+            </div>
+          }
+          @if (comparePhoto2(); as p2) {
+            <div class="compare-pane">
+              <h4>Po</h4>
+              <img [src]="p2.safeUrl" alt="Po" />
+              <p>📅 {{ formatDate(p2.takenAt) }}</p>
+              @if (p2.notes) {<p>💬 {{ p2.notes }}</p>}
+              <select [ngModel]="p2.id" (ngModelChange)="comparePhoto2.set(photos().find(x => x.id === $event) || null)">
+                @for (photo of photos(); track photo.id) {
+                  <option [value]="photo.id">{{ formatDate(photo.takenAt) }} @if(photo.notes){- {{photo.notes}}}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" (click)="closeComparison()">Zamknij</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

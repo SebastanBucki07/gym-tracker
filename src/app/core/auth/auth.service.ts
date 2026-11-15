@@ -48,6 +48,9 @@ export class AuthService {
         await this.userRepository.create(user1);
         await this.userRepository.create(user2);
 
+        await this.seedService.seedSampleUserDataForUser(user1.id);
+        await this.seedService.seedSampleUserDataForUser(user2.id);
+
         await this.settingsRepository.upsert({
           id: 'settings_user_jan_1',
           userId: user1.id,
@@ -73,9 +76,10 @@ export class AuthService {
   private restoreSession() {
     const savedUserId = localStorage.getItem('gym_tracker_current_user_id');
     if (savedUserId) {
-      this.userRepository.getById(savedUserId).then(user => {
+      this.userRepository.getById(savedUserId).then(async user => {
         if (user) {
           this.currentUserSignal.set(user);
+          await this.seedService.seedSampleUserDataForUser(user.id);
         }
       });
     }
@@ -134,9 +138,10 @@ export class AuthService {
     localStorage.removeItem('gym_tracker_current_user_id');
   }
 
-  private loginUser(user: User): void {
+  private async loginUser(user: User): Promise<void> {
     this.currentUserSignal.set(user);
     localStorage.setItem('gym_tracker_current_user_id', user.id);
+    await this.seedService.seedSampleUserDataForUser(user.id);
   }
 
   async getAllUsers(): Promise<User[]> {

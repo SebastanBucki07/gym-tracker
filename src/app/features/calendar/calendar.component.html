@@ -1,0 +1,107 @@
+<div class="calendar-container">
+  <header class="calendar-header">
+    <div class="header-title">
+      <a routerLink="/dashboard" class="back-link">← Panel główny</a>
+      <h2>Kalendarz aktywności</h2>
+    </div>
+    <div class="nav-controls">
+      <button class="btn secondary" (click)="prevMonth()">‹ Poprzedni</button>
+      <h3>{{ polishMonths[currentDate().getMonth()] }} {{ currentDate().getFullYear() }}</h3>
+      <button class="btn secondary" (click)="nextMonth()">Następny ›</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="loading-text">Ładowanie kalendarza...</p>
+  } @else {
+    <div class="calendar-grid">
+      <div class="weekday-header">Pon</div>
+      <div class="weekday-header">Wt</div>
+      <div class="weekday-header">Śr</div>
+      <div class="weekday-header">Czw</div>
+      <div class="weekday-header">Pt</div>
+      <div class="weekday-header">Sob</div>
+      <div class="weekday-header">Nd</div>
+
+      @for (cell of calendarDays(); track cell.dateString) {
+        <div 
+          class="calendar-cell"
+          [class.outside-month]="!cell.isCurrentMonth"
+          [class.today]="cell.isToday"
+          [class.has-activity]="cell.activity && (cell.activity.workouts.length > 0 || cell.activity.cardio.length > 0 || cell.activity.steps || cell.activity.measurements.length > 0)"
+          (click)="selectDay(cell)">
+          <div class="cell-number">{{ cell.dayNumber }}</div>
+          <div class="cell-badges">
+            @if (cell.activity?.workouts?.length) {
+              <span class="badge workout" title="Trening siłowy">💪</span>
+            }
+            @if (cell.activity?.cardio?.length) {
+              <span class="badge cardio" title="Cardio">🏃</span>
+            }
+            @if (cell.activity?.steps) {
+              <span class="badge steps" title="Kroki">👟</span>
+            }
+            @if (cell.activity?.measurements?.length) {
+              <span class="badge measurement" title="Pomiary">📏</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (selectedDayActivity(); as day) {
+    <div class="modal-backdrop" (click)="closeDayModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Aktywności z dnia {{ formatDate(day.dateString) }}</h3>
+          <button class="close-btn" (click)="closeDayModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          @if (day.workouts.length > 0) {
+            <div class="activity-section">
+              <h4>💪 Treningi siłowe:</h4>
+              <ul>
+                @for (w of day.workouts; track w.id) {
+                  <li><strong>{{ w.name }}</strong> (Czas: {{ Math.floor((w.durationSeconds || 0) / 60) }} min)</li>
+                }
+              </ul>
+            </div>
+          }
+
+          @if (day.cardio.length > 0) {
+            <div class="activity-section">
+              <h4>🏃 Cardio:</h4>
+              <ul>
+                @for (c of day.cardio; track c.id) {
+                  <li>Czas: {{ c.durationMinutes }} min @if(c.distanceKm){| Dystans: {{ c.distanceKm }} km} @if(c.calories){| Kalorie: {{ c.calories }} kcal}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          @if (day.steps) {
+            <div class="activity-section">
+              <h4>👟 Kroki dzienne:</h4>
+              <p>{{ day.steps.stepsCount }} kroków</p>
+            </div>
+          }
+
+          @if (day.measurements.length > 0) {
+            <div class="activity-section">
+              <h4>📏 Pomiary ciała:</h4>
+              <ul>
+                @for (m of day.measurements; track m.id) {
+                  <li>Wartość: {{ m.value }} {{ m.notes ? '(' + m.notes + ')' : '' }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" (click)="closeDayModal()">Zamknij</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

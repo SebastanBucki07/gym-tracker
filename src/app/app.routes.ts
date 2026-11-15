@@ -34,6 +34,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/workouts/history/workout-history.component').then(m => m.WorkoutHistoryComponent)
   },
   {
+    path: 'progress-photos',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/progress-photos/progress-photos.component').then(m => m.ProgressPhotosComponent)
+  },
+  {
+    path: 'calendar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent)
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full'

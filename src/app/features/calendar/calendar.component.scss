@@ -1,0 +1,204 @@
+.calendar-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--card-bg, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  .calendar-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    padding-bottom: 1rem;
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .back-link {
+        color: var(--primary-color, #2563eb);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        color: var(--text-color, #1f2937);
+      }
+    }
+
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+
+      .btn.secondary {
+        padding: 0.5rem 1rem;
+        background: #e5e7eb;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+
+        &:hover {
+          background: #d1d5db;
+        }
+      }
+    }
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    background: var(--border-color, #e5e7eb);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    overflow: hidden;
+
+    .weekday-header {
+      background: var(--bg-secondary, #f3f4f6);
+      text-align: center;
+      padding: 0.75rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-color, #374151);
+    }
+
+    .calendar-cell {
+      background: white;
+      min-height: 90px;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      &.outside-month {
+        background: #fdfdfd;
+        opacity: 0.4;
+      }
+
+      &.today {
+        border: 2px solid var(--primary-color, #2563eb);
+      }
+
+      &.has-activity {
+        background: #eff6ff;
+      }
+
+      .cell-number {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-color, #1f2937);
+      }
+
+      .cell-badges {
+        display: flex;
+        gap: 2px;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    .modal-content {
+      background: white;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-color, #e5e7eb);
+
+        h3 {
+          margin: 0;
+          font-size: 1.15rem;
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 1.25rem;
+          cursor: pointer;
+        }
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .activity-section {
+          h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color, #2563eb);
+          }
+
+          ul, p {
+            margin: 0;
+            padding-left: 1rem;
+          }
+        }
+      }
+
+      .modal-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+        display: flex;
+        justify-content: flex-end;
+
+        .btn.secondary {
+          background: #e5e7eb;
+          color: #374151;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}

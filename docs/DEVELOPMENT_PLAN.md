@@ -93,10 +93,10 @@ Status: NOT STARTED
 - [ ] Tests and commit.
 
 ## Stage 9 — Progress photos and calendar
-Status: NOT STARTED
-- [ ] Photo Blob storage, dates, history/comparison.
-- [ ] Calendar activity display/navigation.
-- [ ] Tests and commit.
+Status: COMPLETED
+- [x] Photo Blob storage, dates, history/comparison.
+- [x] Calendar activity display/navigation.
+- [x] Tests and commit.
 
 ## Stage 10 — Dashboard and muscle visualization
 Status: NOT STARTED
