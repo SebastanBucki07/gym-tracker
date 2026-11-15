@@ -70,13 +70,13 @@ Status: COMPLETED
 - [x] Commit.
 
 ## Stage 6 — Workout history and progression
-Status: NOT STARTED
-- [ ] History list/details/filters.
-- [ ] Historical snapshots.
-- [ ] Progressive overload comparisons/suggestions.
-- [ ] PRs and estimated 1RM.
-- [ ] Muscle activity/last trained.
-- [ ] Tests and commit.
+Status: COMPLETED
+- [x] History list/details/filters.
+- [x] Historical snapshots.
+- [x] Progressive overload comparisons/suggestions.
+- [x] PRs and estimated 1RM.
+- [x] Muscle activity/last trained.
+- [x] Tests and commit.
 
 ## Stage 7 — Workout plans
 Status: NOT STARTED

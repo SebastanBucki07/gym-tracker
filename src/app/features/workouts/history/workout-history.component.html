@@ -1,0 +1,145 @@
+<div class="history-container">
+  <header class="history-header">
+    <div class="header-title">
+      <a routerLink="/dashboard" class="back-link">← Panel główny</a>
+      <h2>Historia treningów i progres</h2>
+    </div>
+    <div class="tabs">
+      <button 
+        [class.active]="activeTab() === 'history'" 
+        (click)="activeTab.set('history')"
+        class="tab-btn">
+        📜 Historia Treningów
+      </button>
+      <button 
+        [class.active]="activeTab() === 'prs'" 
+        (click)="activeTab.set('prs')"
+        class="tab-btn">
+        🏆 Rekordy (PRs) & 1RM
+      </button>
+    </div>
+  </header>
+
+  @if (activeTab() === 'history') {
+    <div class="history-content">
+      <div class="filter-bar">
+        <input 
+          type="text" 
+          placeholder="Szukaj po nazwie treningu lub ćwiczenia..." 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event); filterWorkouts()"
+          class="search-input" />
+      </div>
+
+      @if (loading()) {
+        <p class="loading-text">Ładowanie historii treningów...</p>
+      } @else if (filteredWorkouts().length === 0) {
+        <div class="empty-state">
+          <p>Brak ukończonych treningów w historii.</p>
+          <a routerLink="/workouts/active" class="btn primary mt-2">Rozpocznij pierwszy trening</a>
+        </div>
+      } @else {
+        <div class="workouts-list">
+          @for (item of filteredWorkouts(); track item.workout.id) {
+            <div class="workout-card" (click)="selectWorkout(item)">
+              <div class="card-main">
+                <div class="workout-info">
+                  <h3>{{ item.workout.name }}</h3>
+                  <p class="workout-date">{{ formatDate(item.workout.startedAt) }}</p>
+                </div>
+                <div class="workout-stats-summary">
+                  <div class="stat-badge">⏱️ {{ formatDuration(item.workout.durationSeconds) }}</div>
+                  <div class="stat-badge">🏋️‍♂️ {{ item.totalVolume }} kg wol.</div>
+                  <div class="stat-badge">📊 {{ item.completedSetsCount }} serii</div>
+                </div>
+              </div>
+              <div class="card-actions">
+                <button class="btn-icon" title="Szczegóły" (click)="selectWorkout(item); $event.stopPropagation()">🔍</button>
+                <button class="btn-icon delete" title="Usuń" (click)="deleteWorkout(item.workout.id); $event.stopPropagation()">🗑️</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="prs-content">
+      <h3>Twoje Rekordy Życiowe (PRs) i Szacowane 1RM</h3>
+      <p class="subtitle">Szacowane 1RM obliczane jest przy użyciu wzoru Epleya (certyfikowane szacunki).</p>
+
+      @if (personalRecords().length === 0) {
+        <div class="empty-state">
+          <p>Brak zarejestrowanych rekordów. Ukończ treningi z zaliczonymi seriami roboczymi.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="pr-table">
+            <thead>
+              <tr>
+                <th>Ćwiczenie</th>
+                <th>Max Ciężar</th>
+                <th>Max Powtórzeń</th>
+                <th>Szacowane 1RM</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pr of personalRecords(); track pr.exerciseId) {
+                <tr>
+                  <td class="fw-bold">{{ pr.exerciseName }}</td>
+                  <td>{{ pr.maxWeight }} kg <span class="subtext">({{ pr.maxWeightReps }} powt.)</span></td>
+                  <td>{{ pr.maxReps }} powt. <span class="subtext">({{ pr.maxRepsWeight }} kg)</span></td>
+                  <td class="highlight">{{ pr.estimated1RM }} kg</td>
+                  <td>{{ formatDate(pr.achievedAt) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  @if (selectedWorkout(); as details) {
+    <div class="modal-backdrop" (click)="closeDetails()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ details.workout.name }}</h3>
+          <button class="close-btn" (click)="closeDetails()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-meta">
+            <p><strong>Data:</strong> {{ formatDate(details.workout.startedAt) }}</p>
+            <p><strong>Czas trwania:</strong> {{ formatDuration(details.workout.durationSeconds) }}</p>
+            <p><strong>Łączna objętość:</strong> {{ details.totalVolume }} kg</p>
+            <p><strong>Zaliczone serie:</strong> {{ details.completedSetsCount }}</p>
+          </div>
+
+          <div class="exercise-breakdown">
+            <h4>Wykonane ćwiczenia:</h4>
+            @for (exGroup of getGroupedSets(details.sets); track exGroup.exerciseName) {
+              <div class="exercise-summary-card">
+                <h5>{{ exGroup.exerciseName }}</h5>
+                <ul class="sets-list">
+                  @for (set of exGroup.sets; track set.id) {
+                    <li [class.warmup]="set.isWarmup" [class.completed]="set.isCompleted">
+                      <span class="set-num">Seria {{ set.setNumber }} @if(set.isWarmup){(Rozgrzewka)}</span>
+                      <span class="set-val">{{ set.weight || 0 }} kg × {{ set.repetitions || 0 }} powt.</span>
+                      @if (set.isCompleted) {
+                        <span class="badge-done">✓</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" (click)="closeDetails()">Zamknij</button>
+          <button class="btn delete" (click)="deleteWorkout(details.workout.id)">Usuń trening</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
