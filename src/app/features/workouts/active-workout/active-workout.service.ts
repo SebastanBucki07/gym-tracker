@@ -492,11 +492,14 @@ export class ActiveWorkoutService {
     if (!workout) return null;
 
     const now = new Date();
+    const startTime = new Date(workout.startedAt).getTime();
+    const diffSeconds = Math.floor((now.getTime() - startTime) / 1000);
+    const duration = Math.max(this.elapsedSeconds(), diffSeconds, 60);
 
     const completedWorkout: Workout = {
       ...workout,
       completedAt: now,
-      durationSeconds: this.elapsedSeconds(),
+      durationSeconds: duration,
       isCompleted: true,
       updatedAt: now
     };
