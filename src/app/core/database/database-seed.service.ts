@@ -95,7 +95,8 @@ export class DatabaseSeedService {
       });
 
       // 5. Seed Daily Steps
-      const dateStr = now.toISOString().split('T')[0];
+      const nowLocal = new Date();
+      const dateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
       await db.dailySteps.put({
         id: 'steps_' + userId + '_' + dateStr,
         userId,

@@ -25,13 +25,21 @@ export class CalendarService {
   private stepsRepo = new LocalDailyStepsRepository();
   private measurementRepo = new LocalMeasurementRepository();
 
+  private toLocalDateString(date: Date | string): string {
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   async getMonthActivities(userId: string, year: number, month: number): Promise<Map<string, DayActivitySummary>> {
     // month is 0-indexed (0 = January)
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+    const startDate = new Date(year, month, 1, 0, 0, 0, 0);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
+    const startStr = this.toLocalDateString(startDate);
+    const endStr = this.toLocalDateString(endDate);
 
     const workouts = await this.workoutRepo.getByUserId(userId);
     const completedWorkouts = workouts.filter(w => {
@@ -69,12 +77,12 @@ export class CalendarService {
     };
 
     completedWorkouts.forEach(w => {
-      const ds = new Date(w.startedAt).toISOString().split('T')[0];
+      const ds = this.toLocalDateString(w.startedAt);
       ensureDay(ds).workouts.push(w);
     });
 
     monthCardio.forEach(c => {
-      const ds = new Date(c.performedAt).toISOString().split('T')[0];
+      const ds = this.toLocalDateString(c.performedAt);
       ensureDay(ds).cardio.push(c);
     });
 
@@ -83,7 +91,7 @@ export class CalendarService {
     });
 
     monthMeasurements.forEach(m => {
-      const ds = new Date(m.measuredAt).toISOString().split('T')[0];
+      const ds = this.toLocalDateString(m.measuredAt);
       ensureDay(ds).measurements.push(m);
     });
 

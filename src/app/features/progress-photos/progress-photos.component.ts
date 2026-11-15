@@ -23,12 +23,20 @@ export class ProgressPhotosComponent implements OnInit {
   private authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
 
+  private getLocalDateString(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   photos = signal<DisplayPhoto[]>([]);
   loading = signal<boolean>(true);
 
   // Upload form state
   selectedFile = signal<File | null>(null);
-  photoDate = signal<string>(new Date().toISOString().split('T')[0]);
+  photoDate = signal<string>(this.getLocalDateString());
   photoNotes = signal<string>('');
 
   // Comparison state
@@ -81,7 +89,7 @@ export class ProgressPhotosComponent implements OnInit {
       );
       this.selectedFile.set(null);
       this.photoNotes.set('');
-      this.photoDate.set(new Date().toISOString().split('T')[0]);
+      this.photoDate.set(this.getLocalDateString());
       await this.loadPhotos();
     } catch (err) {
       console.error('Error uploading photo:', err);

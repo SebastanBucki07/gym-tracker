@@ -36,6 +36,14 @@ export class CalendarComponent implements OnInit {
     'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
   ];
 
+  private toLocalDateString(date: Date | string): string {
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   async ngOnInit() {
     await this.loadCalendar();
   }
@@ -67,13 +75,13 @@ export class CalendarComponent implements OnInit {
     if (startDayOfWeek === -1) startDayOfWeek = 6;
 
     const days: CalendarDayCell[] = [];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = this.toLocalDateString(new Date());
 
     // Previous month trailing days
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const d = new Date(year, month - 1, prevMonthLastDay - i);
-      const ds = d.toISOString().split('T')[0];
+      const ds = this.toLocalDateString(d);
       days.push({
         date: d,
         dateString: ds,
@@ -87,7 +95,7 @@ export class CalendarComponent implements OnInit {
     // Current month days
     for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
       const d = new Date(year, month, i);
-      const ds = d.toISOString().split('T')[0];
+      const ds = this.toLocalDateString(d);
       days.push({
         date: d,
         dateString: ds,
@@ -103,7 +111,7 @@ export class CalendarComponent implements OnInit {
     const remainingCells = totalCells - days.length;
     for (let i = 1; i <= remainingCells; i++) {
       const d = new Date(year, month + 1, i);
-      const ds = d.toISOString().split('T')[0];
+      const ds = this.toLocalDateString(d);
       days.push({
         date: d,
         dateString: ds,
