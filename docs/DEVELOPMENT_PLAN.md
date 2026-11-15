@@ -60,14 +60,14 @@ Suggested Gemini CLI prompt to resume:
 “Read GEMINI.md and the relevant project docs. Audit Stage 4 (Exercise catalog) against the checklist in docs/DEVELOPMENT_PLAN.md. Inspect the actual implementation and run relevant tests/build. Do not implement new features yet. Report each item as PASS / PARTIAL / MISSING, with file paths and evidence, then identify the exact next task. Update this plan only with verified facts.”
 
 ## Stage 5 — Workout engine
-Status: NOT STARTED
-- [ ] Empty workout and plan-based workout.
-- [ ] Add/remove/reorder/repeat exercises.
-- [ ] Set management and warm-up flag.
-- [ ] Autosave/resume after refresh.
-- [ ] Completion and summary.
-- [ ] Volume calculations and tests.
-- [ ] Commit.
+Status: COMPLETED
+- [x] Empty workout and plan-based workout.
+- [x] Add/remove/reorder/repeat exercises.
+- [x] Set management and warm-up flag.
+- [x] Autosave/resume after refresh.
+- [x] Completion and summary.
+- [x] Volume calculations and tests.
+- [x] Commit.
 
 ## Stage 6 — Workout history and progression
 Status: NOT STARTED
@@ -128,4 +128,4 @@ Status: NOT STARTED
 - [ ] Commit.
 
 ## Current task
-Stage 4 — audit the current implementation first, establish the exact checkpoint, then finish remaining acceptance criteria.
+Stage 5 — Workout engine: empty workout and plan-based workout, exercise management, set management, autosave/resume, completion, volume calculations and tests.
