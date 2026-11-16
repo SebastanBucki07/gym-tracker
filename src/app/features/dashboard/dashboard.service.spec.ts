@@ -67,6 +67,7 @@ describe('DashboardQueryService', () => {
     await db.workoutSets.bulkAdd(sets);
 
     // 2. Seed Cardio
+    await db.cardioTypes.put({ id: 'cardio_treadmill', name: 'Bieżnia', isSystem: true });
     const cardio: CardioActivity = {
       id: 'c_1',
       userId,
@@ -109,6 +110,10 @@ describe('DashboardQueryService', () => {
     expect(summary.cardio.sessionsCount).toBe(1);
     expect(summary.cardio.totalDurationMinutes).toBe(30);
     expect(summary.cardio.totalDistanceKm).toBe(4.0);
+    expect(summary.cardio.typeBreakdown.length).toBe(1);
+    expect(summary.cardio.typeBreakdown[0].typeName).toBe('Bieżnia');
+    expect(summary.cardio.typeBreakdown[0].count).toBe(1);
+    expect(summary.cardio.typeBreakdown[0].duration).toBe(30);
 
     expect(summary.steps.totalSteps).toBe(11000);
     expect(summary.steps.daysMeetingGoal).toBe(1);

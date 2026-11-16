@@ -81,4 +81,20 @@ describe('DatabaseSeedService - Measurement Types Migration & Deduplication', ()
     expect(annaMeas?.measurementTypeId).toBe(CANONICAL_BODY_WEIGHT_TYPE_ID);
     expect(annaMeas?.value).toBe(61.0);
   });
+
+  it('should seed sample user data with active workout and cardio in current week', async () => {
+    await db.workouts.clear();
+    await db.workoutSets.clear();
+    await db.cardioActivities.clear();
+    await db.dailySteps.clear();
+
+    await service.seedSampleUserDataForUser('user_seed_test');
+
+    const workouts = await db.workouts.where('userId').equals('user_seed_test').toArray();
+    expect(workouts.length).toBe(2);
+
+    const cardio = await db.cardioActivities.where('userId').equals('user_seed_test').toArray();
+    expect(cardio.length).toBe(1);
+    expect(cardio[0].durationMinutes).toBe(30);
+  });
 });

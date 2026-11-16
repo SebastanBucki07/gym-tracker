@@ -55,6 +55,26 @@ export class DatabaseSeedService {
 
       // Safe migration and deduplication of previously seeded duplicate measurement types
       await this.migrateAndDeduplicateMeasurementTypes();
+
+      // Ensure sample user data has active workout and cardio in current week
+      const janCardio = await db.cardioActivities.where('userId').equals('user_jan_1').first();
+      if (janCardio && janCardio.note === 'Poranny bieg interwałowy') {
+        const cDate = new Date(janCardio.performedAt);
+        if (Math.abs(Date.now() - cDate.getTime()) > 24 * 3600000) {
+          await db.cardioActivities.update(janCardio.id, { performedAt: new Date() });
+        }
+      }
+
+      const janW2 = await db.workouts.where('userId').equals('user_jan_1').filter(w => w.name === 'Trening B - Nogi i Plecy').first();
+      if (janW2) {
+        const wDate = new Date(janW2.completedAt || janW2.startedAt);
+        if (Math.abs(Date.now() - wDate.getTime()) > 24 * 3600000) {
+          await db.workouts.update(janW2.id, {
+            startedAt: new Date(Date.now() - 7200000),
+            completedAt: new Date(Date.now() - 3600000)
+          });
+        }
+      }
     } catch (err) {
       console.error('Error seeding database:', err);
     }
@@ -141,7 +161,7 @@ export class DatabaseSeedService {
         treadmillId = cardioTypes[0].id;
       }
 
-      // 4. Seed Cardio Activity
+      // 4. Seed Cardio Activity (active today)
       await db.cardioActivities.add({
         id: 'cardio_act_' + crypto.randomUUID(),
         userId,
@@ -150,7 +170,7 @@ export class DatabaseSeedService {
         distanceKm: 4.2,
         calories: 320,
         averageHeartRate: 145,
-        performedAt: yesterday,
+        performedAt: now,
         note: 'Poranny bieg interwałowy'
       });
 
@@ -171,13 +191,13 @@ export class DatabaseSeedService {
         id: w1Id,
         userId,
         name: 'Trening A - Klatka i Triceps',
-        startedAt: threeDaysAgo,
-        completedAt: new Date(threeDaysAgo.getTime() + 3600000),
+        startedAt: yesterday,
+        completedAt: new Date(yesterday.getTime() + 3600000),
         durationSeconds: 3600,
         notes: 'Świetna sesja treningowa',
         isCompleted: true,
-        createdAt: threeDaysAgo,
-        updatedAt: threeDaysAgo
+        createdAt: yesterday,
+        updatedAt: yesterday
       };
 
       const w1Sets = [
@@ -222,18 +242,20 @@ export class DatabaseSeedService {
       await db.workouts.add(w1);
       await db.workoutSets.bulkAdd(w1Sets);
 
+      const twoHoursAgo = new Date(now.getTime() - 7200000);
+      const oneHourAgo = new Date(now.getTime() - 3600000);
       const w2Id = 'w_' + crypto.randomUUID();
       const w2: any = {
         id: w2Id,
         userId,
         name: 'Trening B - Nogi i Plecy',
-        startedAt: yesterday,
-        completedAt: new Date(yesterday.getTime() + 4500000),
+        startedAt: twoHoursAgo,
+        completedAt: oneHourAgo,
         durationSeconds: 4500,
         notes: 'Mocne przysiady',
         isCompleted: true,
-        createdAt: yesterday,
-        updatedAt: yesterday
+        createdAt: twoHoursAgo,
+        updatedAt: oneHourAgo
       };
 
       const w2Sets = [

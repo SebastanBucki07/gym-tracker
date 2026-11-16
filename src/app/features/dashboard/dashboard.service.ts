@@ -63,30 +63,34 @@ export class DashboardQueryService {
 
   getDateRange(preset: DateRangePreset): { startDate: Date; endDate: Date } {
     const now = new Date();
-    // Monday start of week
+    // Monday start of week (0 is Sunday -> -6, 1 is Monday -> 0, etc.)
     const day = now.getDay();
     const diffToMonday = day === 0 ? -6 : 1 - day;
     
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday, 0, 0, 0, 0);
-    const sunday = new Date(monday.getTime() + 6 * 86400000 + 83999999); // end of sunday
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 23, 59, 59, 999);
 
     if (preset === 'current-week') {
-      return { startDate: monday, endDate: new Date(monday.getTime() + 7 * 86400000 - 1) };
+      return { startDate: monday, endDate: sunday };
     } else if (preset === 'previous-week') {
-      const prevMonday = new Date(monday.getTime() - 7 * 86400000);
-      const prevSunday = new Date(monday.getTime() - 1);
+      const prevMonday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7, 0, 0, 0, 0);
+      const prevSunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 1, 23, 59, 59, 999);
       return { startDate: prevMonday, endDate: prevSunday };
     } else if (preset === 'current-month') {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
       return { startDate: firstDay, endDate: lastDay };
     } else {
-      const farPast = new Date(2020, 0, 1);
-      return { startDate: farPast, endDate: new Date() };
+      const farPast = new Date(2020, 0, 1, 0, 0, 0, 0);
+      const farFuture = new Date(2099, 11, 31, 23, 59, 59, 999);
+      return { startDate: farPast, endDate: farFuture };
     }
   }
 
   toLocalDateString(date: Date | string): string {
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
     const d = new Date(date);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -103,8 +107,8 @@ export class DashboardQueryService {
     const workouts = await this.workoutRepo.getByUserId(userId);
     const completedWorkouts = workouts.filter(w => {
       if (!w.isCompleted) return false;
-      const d = new Date(w.startedAt);
-      return d >= startDate && d <= endDate;
+      const workoutDateStr = this.toLocalDateString(w.completedAt || w.startedAt);
+      return workoutDateStr >= startStr && workoutDateStr <= endStr;
     });
 
     let workoutsCount = completedWorkouts.length;
@@ -155,7 +159,8 @@ export class DashboardQueryService {
     for (const w of allCompletedWorkouts) {
       const sets = await this.workoutRepo.getSetsForWorkout(w.id);
       const wDate = new Date(w.completedAt || w.startedAt);
-      const isWithinPeriod = wDate >= startDate && wDate <= endDate;
+      const wDateStr = this.toLocalDateString(wDate);
+      const isWithinPeriod = wDateStr >= startStr && wDateStr <= endStr;
 
       if (isWithinPeriod) {
         totalDurationSeconds += w.durationSeconds || 0;
@@ -214,8 +219,8 @@ export class DashboardQueryService {
     // 2. Cardio Activities
     const cardioActivities = await this.cardioRepo.getActivities(userId);
     const periodCardio = cardioActivities.filter(c => {
-      const d = new Date(c.performedAt);
-      return d >= startDate && d <= endDate;
+      const cDateStr = this.toLocalDateString(c.performedAt);
+      return cDateStr >= startStr && cDateStr <= endStr;
     });
 
     const cardioTypes = await this.cardioRepo.getTypes();
