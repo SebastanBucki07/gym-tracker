@@ -106,10 +106,18 @@ Status: COMPLETED
 - [x] Tests and commit.
 
 ## Stage 11 — PWA/offline
-Status: NOT STARTED
-- [ ] Manifest/icons/service worker/installability.
-- [ ] Offline shell and local data behavior.
-- [ ] Offline tests and commit.
+Status: COMPLETED
+- [x] Manifest/icons/service worker/installability.
+- [x] Offline shell and local data behavior.
+- [x] Offline tests and commit.
+- Notes:
+  - Web App Manifest configured (`manifest.webmanifest` & `manifest.json`) with Gym Tracker name, short name, icons, standalone display mode, brand colors.
+  - Standard PWA icon set generated (72x72 to 512x512) including maskable icons.
+  - Angular Service Worker (`@angular/service-worker`) configured with `ngsw-config.json` prefetching app shell and lazily caching static assets.
+  - Security: CacheStorage strictly limited to public app shell assets; private user data kept isolated in IndexedDB.
+  - Offline network detection via `NetworkStatusService` with discreet status banner and auto-dismissing reconnection notice.
+  - PWA installation prompt handled via `PwaInstallService` (`beforeinstallprompt`, standalone mode detection, install button).
+  - Browser limitations: `beforeinstallprompt` is standard on Chromium browsers (Chrome, Edge, Android Webview); iOS Safari requires "Add to Home Screen" from the Share menu.
 
 ## Stage 12 — Final QA
 Status: NOT STARTED
@@ -128,4 +136,4 @@ Status: NOT STARTED
 - [ ] Commit.
 
 ## Current task
-Stage 10 — Dashboard and muscle visualization: weekly statistics and charts, interactive front/back muscle visualization, last-trained calculations, weighted muscle involvement, date range selector, unit tests, and production build verification.
+Stage 11 — PWA/offline: complete PWA implementation with web app manifest, standard/maskable icons, Angular Service Worker caching app shell and static assets, offline detection with localized banners, PWA install prompt integration, and offline persistence validation.

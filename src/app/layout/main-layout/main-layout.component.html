@@ -1,4 +1,27 @@
 <div class="layout-wrapper">
+  @if (!networkStatus.isOnline()) {
+    <div class="status-banner offline-bar" role="status" aria-live="polite">
+      <span class="status-icon">⚡</span>
+      <span class="status-text">Tryb offline — wszystkie dane treningowe są zapisywane lokalnie w pamięci urządzenia.</span>
+    </div>
+  }
+
+  @if (networkStatus.showReconnectedNotice()) {
+    <div class="status-banner reconnected-bar" role="status" aria-live="polite">
+      <span class="status-icon">🟢</span>
+      <span class="status-text">Połączenie z siecią zostało przywrócone.</span>
+      <button class="close-notice-btn" (click)="networkStatus.dismissReconnectedNotice()" aria-label="Zamknij powiadomienie">✕</button>
+    </div>
+  }
+
+  @if (pwaInstall.updateAvailable()) {
+    <div class="status-banner update-bar" role="status">
+      <span class="status-icon">🚀</span>
+      <span class="status-text">Dostępna jest nowa wersja Gym Tracker!</span>
+      <button class="btn update-action-btn" (click)="reloadForUpdate()">Zaktualizuj teraz</button>
+    </div>
+  }
+
   <header class="global-navbar">
     <div class="navbar-brand">
       <a routerLink="/dashboard" class="brand-link">
@@ -17,6 +40,12 @@
         <a routerLink="/workouts/active" class="btn workout-btn">
           💪 Nowy trening
         </a>
+      }
+
+      @if (pwaInstall.canInstall()) {
+        <button class="btn install-pwa-btn" (click)="installPwa()" title="Zainstaluj aplikację Gym Tracker">
+          📲 Zainstaluj
+        </button>
       }
     </div>
 
