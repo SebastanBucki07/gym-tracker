@@ -128,7 +128,7 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13C.2 Supabase Cloud Schema Deployment Preparation Completed)
+Status: IN PROGRESS (Stage 13C.2.1 Supabase SQL Security & Deployment Audit Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
@@ -139,11 +139,12 @@ Status: IN PROGRESS (Stage 13C.2 Supabase Cloud Schema Deployment Preparation Co
 - [x] Supabase user data isolation (`supa_${supaUser.id}` workspace mapping, Stage 13B.3).
 - [x] Multi-account isolation audit (`ISOLATION_AUDIT.md`, Stage 13B.4).
 - [x] Migration readiness and data ownership audit (Stage 13C.1).
-- [x] Supabase cloud schema deployment preparation (`001_schema.sql`, `002_rls.sql`, `003_storage.sql`, `004_sync_metadata.sql`, `DEPLOYMENT_GUIDE.md`, `VERIFICATION_QUERIES.sql`, `ROLLBACK_GUIDE.md`, Stage 13C.2).
+- [x] Supabase cloud schema deployment preparation (Stage 13C.2).
+- [x] Supabase SQL security & deployment audit (`SQL_SECURITY_AUDIT.md`, Stage 13C.2.1).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13C.2 — Supabase cloud schema deployment preparation: created deployment-ready SQL scripts (`001_schema.sql` through `004_sync_metadata.sql`) covering all 14 tables, RLS policies, private storage policies, sync metadata, and created comprehensive deployment, verification, and rollback guides (`DEPLOYMENT_GUIDE.md`, `VERIFICATION_QUERIES.sql`, `ROLLBACK_GUIDE.md`).
+Stage 13C.2.1 — Supabase SQL security & deployment audit: conducted independent read-only security and correctness review across schema correctness, RLS policies, security definer functions, storage isolation, sync metadata, and deployment safety, producing `SQL_SECURITY_AUDIT.md` (Pass with Conditions).
