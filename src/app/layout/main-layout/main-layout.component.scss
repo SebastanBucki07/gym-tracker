@@ -4,6 +4,72 @@
   min-height: 100vh;
   background: var(--color-bg, #f4f6f9);
 
+  .status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+
+    .status-icon {
+      font-size: 1rem;
+    }
+
+    &.offline-bar {
+      background: #fef3c7;
+      color: #92400e;
+      border-bottom: 1px solid #fde68a;
+    }
+
+    &.reconnected-bar {
+      background: #d1fae5;
+      color: #065f46;
+      border-bottom: 1px solid #a7f3d0;
+      position: relative;
+
+      .close-notice-btn {
+        background: transparent;
+        border: none;
+        color: #065f46;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 0.5rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+      }
+    }
+
+    &.update-bar {
+      background: #eff6ff;
+      color: #1e40af;
+      border-bottom: 1px solid #bfdbfe;
+
+      .update-action-btn {
+        margin-left: 0.75rem;
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+          background: #1d4ed8;
+        }
+      }
+    }
+  }
+
   .global-navbar {
     display: flex;
     justify-content: space-between;
@@ -42,6 +108,27 @@
     .navbar-center {
       display: flex;
       align-items: center;
+      gap: 0.75rem;
+
+      .install-pwa-btn {
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        padding: 0.45rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #e5e7eb;
+          color: #111827;
+        }
+      }
 
       .workout-btn {
         padding: 0.55rem 1.2rem;
