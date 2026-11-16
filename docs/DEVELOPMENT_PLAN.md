@@ -128,17 +128,17 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13B.1 Live Supabase Auth Integration & Verification & Session Restoration Fix Completed)
+Status: IN PROGRESS (Stage 13B.2 Local Data Integration After Supabase Auth Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
 - [x] Supabase Auth implementation (`SupabaseAuthService`, login/signup UI, environment configuration, Stage 13B).
 - [x] Live Supabase Auth integration & verification documentation (`AUTH_LIVE_VERIFICATION.md`, Stage 13B.1).
 - [x] Auth redirect session restoration fix (`waitForSession` in `SupabaseAuthService` & async `authGuard`, Stage 13B.1).
-- [ ] Repository implementations and mappers.
+- [x] Local data integration after Supabase auth (`getCurrentUserId()` fallback in `AuthService`, feature component updates, and regression test suite, Stage 13B.2).
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13B.1 — Live Supabase Auth integration and verification: resolved email confirmation redirect session restoration issue via `waitForSession()` and async `authGuard`, configured `emailRedirectTo`, verified unit tests (54 tests passed) and production build.
+Stage 13B.2 — Local data integration after Supabase auth: resolved infinite loading state when logged in via Supabase Auth by introducing `getCurrentUserId()` fallback in `AuthService`, updating feature components to load from Dexie, and adding comprehensive regression tests (59 tests passed).

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ActiveWorkoutService } from './active-workout.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { SupabaseAuthService } from '../../../core/auth/supabase-auth.service';
 import { LocalExerciseRepository } from '../../../data-access/local/local-exercise.repository';
 import { Exercise } from '../../../data-access/contracts/exercise.model';
 import { MuscleGroup } from '../../../data-access/contracts/muscle-group.model';
@@ -22,6 +23,7 @@ export class ActiveWorkoutComponent implements OnInit {
   public activeWorkoutService = inject(ActiveWorkoutService);
 
   private authService = inject(AuthService);
+  private supabaseAuth = inject(SupabaseAuthService);
   private exerciseRepo = new LocalExerciseRepository();
   private router = inject(Router);
 
@@ -32,11 +34,11 @@ export class ActiveWorkoutComponent implements OnInit {
   showAddExerciseModal = signal(false);
   showSummaryModal = signal(false);
   summaryData = signal<{
-  elapsedSeconds: number;
-  totalVolume: number;
-  completedSetsCount: number;
-  totalSetsCount: number;
-} | null>(null);
+    elapsedSeconds: number;
+    totalVolume: number;
+    completedSetsCount: number;
+    totalSetsCount: number;
+  } | null>(null);
 
   searchQuery = signal('');
   selectedMuscleGroup = signal('');
@@ -44,16 +46,23 @@ export class ActiveWorkoutComponent implements OnInit {
   filteredCatalog = signal<Exercise[]>([]);
 
   async ngOnInit(): Promise<void> {
-    const user = this.authService.currentUser();
+    const userId = this.authService.getCurrentUserId();
+    const hasLocalUser = !!this.authService.currentUser();
+    const isSupaAuth = this.supabaseAuth.isAuthenticated();
 
-    if (!user) {
-      await this.router.navigate(['/login']);
-      return;
+    if (!hasLocalUser && !isSupaAuth) {
+      if (this.supabaseAuth.isLoading()) {
+        await this.supabaseAuth.waitForSession();
+      }
+      if (!this.supabaseAuth.isAuthenticated() && !this.authService.currentUser()) {
+        await this.router.navigate(['/login']);
+        return;
+      }
     }
 
     try {
       const [exs, mgs, eqs] = await Promise.all([
-        this.exerciseRepo.getAll(user.id),
+        this.exerciseRepo.getAll(userId),
         db.muscleGroups.toArray(),
         db.equipmentCategories.toArray()
       ]);
@@ -64,11 +73,11 @@ export class ActiveWorkoutComponent implements OnInit {
       this.equipmentCategories.set(eqs);
 
       if (!this.activeWorkoutService.isActive()) {
-        const resumed = this.activeWorkoutService.loadFromStorage(user.id);
+        const resumed = this.activeWorkoutService.loadFromStorage(userId);
 
         if (!resumed) {
           this.activeWorkoutService.startEmptyWorkout(
-            user.id,
+            userId,
             'Trening siłowy'
           );
         }

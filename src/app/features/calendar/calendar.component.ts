@@ -49,15 +49,14 @@ export class CalendarComponent implements OnInit {
   }
 
   async loadCalendar() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     const year = this.currentDate().getFullYear();
     const month = this.currentDate().getMonth();
 
     try {
-      const activitiesMap = await this.calendarService.getMonthActivities(user.id, year, month);
+      const activitiesMap = await this.calendarService.getMonthActivities(userId, year, month);
       this.buildCalendarGrid(year, month, activitiesMap);
     } catch (err) {
       console.error('Error loading calendar activities:', err);

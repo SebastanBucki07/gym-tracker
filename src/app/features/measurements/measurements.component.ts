@@ -48,14 +48,13 @@ export class MeasurementsComponent implements OnInit {
   }
 
   async loadData() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
       const [types, allMeasurements] = await Promise.all([
-        this.measurementRepo.getTypes(user.id),
-        this.measurementRepo.getMeasurements(user.id)
+        this.measurementRepo.getTypes(userId),
+        this.measurementRepo.getMeasurements(userId)
       ]);
       this.measurementTypes.set(types);
       this.measurements.set(allMeasurements);
@@ -171,13 +170,12 @@ export class MeasurementsComponent implements OnInit {
 
   async saveMeasurement() {
     if (this.measurementForm.invalid) return;
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     const val = this.measurementForm.value;
     const measurement: BodyMeasurement = {
       id: 'meas_' + crypto.randomUUID(),
-      userId: user.id,
+      userId,
       measurementTypeId: val.measurementTypeId,
       value: Number(val.value),
       measuredAt: new Date(val.measuredAt),
@@ -204,14 +202,13 @@ export class MeasurementsComponent implements OnInit {
 
   async saveMeasurementType() {
     if (this.typeForm.invalid) return;
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     const val = this.typeForm.value;
     const typeId = 'type_' + crypto.randomUUID();
     const newType: MeasurementType = {
       id: typeId,
-      userId: user.id,
+      userId,
       name: val.name,
       unit: val.unit,
       isSystem: false

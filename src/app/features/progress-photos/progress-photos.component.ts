@@ -49,12 +49,11 @@ export class ProgressPhotosComponent implements OnInit {
   }
 
   async loadPhotos() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
-      const rawPhotos = await this.photoService.getPhotos(user.id);
+      const rawPhotos = await this.photoService.getPhotos(userId);
       const displayPhotos: DisplayPhoto[] = rawPhotos.map(p => ({
         ...p,
         safeUrl: this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(p.imageBlob))
@@ -76,13 +75,13 @@ export class ProgressPhotosComponent implements OnInit {
 
   async uploadPhoto(event: Event) {
     event.preventDefault();
-    const user = this.authService.currentUser();
+    const userId = this.authService.getCurrentUserId();
     const file = this.selectedFile();
-    if (!user || !file) return;
+    if (!file) return;
 
     try {
       await this.photoService.uploadPhoto(
-        user.id,
+        userId,
         file,
         new Date(this.photoDate()),
         this.photoNotes()

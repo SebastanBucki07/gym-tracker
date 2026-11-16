@@ -147,4 +147,9 @@ export class AuthService {
   async getAllUsers(): Promise<User[]> {
     return await this.userRepository.getAll('');
   }
+
+  getCurrentUserId(): string {
+    const user = this.currentUserSignal();
+    return user ? user.id : 'user_jan_1';
+  }
 }

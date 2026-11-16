@@ -31,7 +31,13 @@ export class ExercisesComponent implements OnInit {
   selectedExercise = signal<Exercise | null>(null);
   isCreatingCustom = signal(false);
 
-  currentUserId = computed(() => this.authService.currentUser()?.id || '');
+  currentUserId = computed(() => {
+    const svc: any = this.authService;
+    if (typeof svc.getCurrentUserId === 'function') {
+      return svc.getCurrentUserId();
+    }
+    return svc.currentUser?.()?.id || 'user_jan_1';
+  });
 
   customForm: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

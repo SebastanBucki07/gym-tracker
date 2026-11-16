@@ -31,8 +31,7 @@ export class StepsComponent implements OnInit {
   }
 
   async loadData() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
@@ -42,7 +41,7 @@ export class StepsComponent implements OnInit {
       const startStr = past.toISOString().substring(0, 10);
       const endStr = now.toISOString().substring(0, 10);
 
-      const records = await this.stepsRepo.getByRange(user.id, startStr, endStr);
+      const records = await this.stepsRepo.getByRange(userId, startStr, endStr);
       // Sort desc by date
       records.sort((a, b) => b.date.localeCompare(a.date));
       this.stepsHistory.set(records);
@@ -55,16 +54,15 @@ export class StepsComponent implements OnInit {
 
   async saveSteps() {
     if (this.stepsForm.invalid) return;
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     const val = this.stepsForm.value;
     const dateStr = val.date;
     const stepsCount = Number(val.stepsCount);
 
     const stepsRecord: DailySteps = {
-      id: 'steps_' + user.id + '_' + dateStr,
-      userId: user.id,
+      id: 'steps_' + userId + '_' + dateStr,
+      userId,
       date: dateStr,
       stepsCount: stepsCount,
       updatedAt: new Date()

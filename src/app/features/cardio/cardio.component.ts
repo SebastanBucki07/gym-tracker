@@ -39,14 +39,13 @@ export class CardioComponent implements OnInit {
   }
 
   async loadData() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
       const [types, activities] = await Promise.all([
         this.cardioRepo.getTypes(),
-        this.cardioRepo.getActivities(user.id)
+        this.cardioRepo.getActivities(userId)
       ]);
       this.cardioTypes.set(types);
       // Sort activities by performedAt desc
@@ -100,13 +99,12 @@ export class CardioComponent implements OnInit {
 
   async saveCardio() {
     if (this.cardioForm.invalid) return;
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     const val = this.cardioForm.value;
     const activityData: CardioActivity = {
       id: this.editingId() || 'cardio_' + crypto.randomUUID(),
-      userId: user.id,
+      userId,
       cardioTypeId: val.cardioTypeId,
       durationMinutes: Number(val.durationMinutes),
       distanceKm: val.distanceKm ? Number(val.distanceKm) : undefined,
