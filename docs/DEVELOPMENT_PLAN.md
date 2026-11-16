@@ -128,7 +128,7 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13C.1 Migration Readiness & Data Ownership Audit Completed)
+Status: IN PROGRESS (Stage 13C.2 Supabase Cloud Schema Deployment Preparation Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
@@ -138,11 +138,12 @@ Status: IN PROGRESS (Stage 13C.1 Migration Readiness & Data Ownership Audit Comp
 - [x] Local data integration after Supabase auth (Stage 13B.2).
 - [x] Supabase user data isolation (`supa_${supaUser.id}` workspace mapping, Stage 13B.3).
 - [x] Multi-account isolation audit (`ISOLATION_AUDIT.md`, Stage 13B.4).
-- [x] Migration readiness and data ownership audit (`DATA_OWNERSHIP_AUDIT.md`, `CLOUD_SCHEMA_MAPPING.md`, `SYNC_ARCHITECTURE.md`, `INITIAL_IMPORT_PLAN.md`, `STAGE_13C_ROADMAP.md`, Stage 13C.1).
+- [x] Migration readiness and data ownership audit (Stage 13C.1).
+- [x] Supabase cloud schema deployment preparation (`001_schema.sql`, `002_rls.sql`, `003_storage.sql`, `004_sync_metadata.sql`, `DEPLOYMENT_GUIDE.md`, `VERIFICATION_QUERIES.sql`, `ROLLBACK_GUIDE.md`, Stage 13C.2).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13C.1 — Migration readiness and data ownership audit: performed read-only audit of Dexie tables and legacy data ownership, produced data ownership classification, cloud schema mapping, sync architecture design, initial import plan, and implementation roadmap (`STAGE_13C_ROADMAP.md`).
+Stage 13C.2 — Supabase cloud schema deployment preparation: created deployment-ready SQL scripts (`001_schema.sql` through `004_sync_metadata.sql`) covering all 14 tables, RLS policies, private storage policies, sync metadata, and created comprehensive deployment, verification, and rollback guides (`DEPLOYMENT_GUIDE.md`, `VERIFICATION_QUERIES.sql`, `ROLLBACK_GUIDE.md`).
