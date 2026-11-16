@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Gym Tracker — Production Schema Deployment Script (001_schema.sql)
--- STAGE 13C.2 — Supabase Cloud Schema Deployment Preparation
+-- STAGE 13C.2.2 — Supabase SQL Finalization & Hardening
 -- REVIEW ONLY — NOT EXECUTED AGAINST LIVE DATABASE
 -- ============================================================================
 
@@ -15,6 +15,10 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Revoke execute from public for security hardening
+REVOKE EXECUTE ON FUNCTION public.handle_updated_at() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.handle_updated_at() TO authenticated, service_role;
 
 -- ============================================================================
 -- 1. Profiles Table (Table 1 of 14)
@@ -53,6 +57,9 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO authenticated, service_role;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -289,6 +296,7 @@ CREATE TRIGGER set_progress_photos_updated_at
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_workouts_user_id ON public.workouts(user_id);
 CREATE INDEX IF NOT EXISTS idx_workouts_started_at ON public.workouts(started_at);
+CREATE INDEX IF NOT EXISTS idx_workout_sets_workout_id ON public.workout_sets(workout_id);
 CREATE INDEX IF NOT EXISTS idx_body_measurements_user_id ON public.body_measurements(user_id);
 CREATE INDEX IF NOT EXISTS idx_cardio_activities_user_id ON public.cardio_activities(user_id);
 CREATE INDEX IF NOT EXISTS idx_daily_steps_user_date ON public.daily_steps(user_id, date);

@@ -1,12 +1,13 @@
 -- ============================================================================
 -- Gym Tracker — Production Synchronization Metadata Script (004_sync_metadata.sql)
--- STAGE 13C.2 — Supabase Cloud Schema Deployment Preparation
+-- STAGE 13C.2.2 — Supabase SQL Finalization & Hardening
 -- REVIEW ONLY — NOT EXECUTED AGAINST LIVE DATABASE
 -- ============================================================================
 
 -- Helper functions and indexes for synchronization and conflict resolution
 
--- Function to safely fetch records updated since a given timestamp (delta sync pull)
+-- Function placeholder for future bidirectional sync engine (Stage 13C.5).
+-- Currently un-implemented and returns empty set by design.
 CREATE OR REPLACE FUNCTION public.get_user_deltas(
     p_user_id UUID,
     p_table_name TEXT,
@@ -14,10 +15,14 @@ CREATE OR REPLACE FUNCTION public.get_user_deltas(
 )
 RETURNS SETOF jsonb AS $$
 BEGIN
-    -- Dynamic delta retrieval can be implemented here or handled via PostgREST queries directly.
-    RETURN;
+    -- Pull synchronization is not yet implemented.
+    -- This function stub is reserved for Stage 13C.5.
+    RAISE EXCEPTION 'Pull synchronization (get_user_deltas) is not implemented yet in Stage 13C.2.2.';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) TO authenticated, service_role;
 
 -- Additional indexes to optimize delta sync queries by updated_at_utc and deleted_at
 CREATE INDEX IF NOT EXISTS idx_workouts_sync ON public.workouts(user_id, updated_at_utc);

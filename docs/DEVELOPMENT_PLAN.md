@@ -128,7 +128,7 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13C.2.1 Supabase SQL Security & Deployment Audit Completed)
+Status: IN PROGRESS (Stage 13C.2.2 Supabase SQL Finalization Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
@@ -140,11 +140,12 @@ Status: IN PROGRESS (Stage 13C.2.1 Supabase SQL Security & Deployment Audit Comp
 - [x] Multi-account isolation audit (`ISOLATION_AUDIT.md`, Stage 13B.4).
 - [x] Migration readiness and data ownership audit (Stage 13C.1).
 - [x] Supabase cloud schema deployment preparation (Stage 13C.2).
-- [x] Supabase SQL security & deployment audit (`SQL_SECURITY_AUDIT.md`, Stage 13C.2.1).
+- [x] Supabase SQL security & deployment audit (Stage 13C.2.1).
+- [x] Supabase SQL finalization (`001_schema.sql`, `004_sync_metadata.sql`, `SQL_SECURITY_AUDIT.md`, Stage 13C.2.2).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13C.2.1 — Supabase SQL security & deployment audit: conducted independent read-only security and correctness review across schema correctness, RLS policies, security definer functions, storage isolation, sync metadata, and deployment safety, producing `SQL_SECURITY_AUDIT.md` (Pass with Conditions).
+Stage 13C.2.2 — Supabase SQL finalization: finalized Supabase deployment SQL scripts with workout_sets performance indexing (`idx_workout_sets_workout_id`), restricted function execution privileges (`REVOKE FROM PUBLIC`), clarified sync placeholder status (`get_user_deltas`), and updated audit documentation (`SQL_SECURITY_AUDIT.md`, PASS classification).
