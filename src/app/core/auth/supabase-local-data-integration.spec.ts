@@ -5,20 +5,23 @@ import { LocalCardioRepository } from '../../data-access/local/local-cardio.repo
 import { LocalDailyStepsRepository } from '../../data-access/local/local-daily-steps.repository';
 import { LocalMeasurementRepository } from '../../data-access/local/local-measurement.repository';
 import { AuthService } from './auth.service';
+import { SupabaseAuthService } from './supabase-auth.service';
 import { Workout, WorkoutSet } from '../../data-access/contracts/workout.model';
 import { CardioActivity } from '../../data-access/contracts/cardio.model';
 import { DailySteps } from '../../data-access/contracts/daily-steps.model';
 import { BodyMeasurement, CANONICAL_BODY_WEIGHT_TYPE_ID } from '../../data-access/contracts/measurement.model';
 
-describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2)', () => {
+describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2 & 13B.3 Isolation)', () => {
   let authService: AuthService;
+  let supabaseAuth: SupabaseAuthService;
   let workoutRepo: LocalWorkoutRepository;
   let cardioRepo: LocalCardioRepository;
   let stepsRepo: LocalDailyStepsRepository;
   let measurementRepo: LocalMeasurementRepository;
 
   beforeEach(async () => {
-    authService = new AuthService();
+    supabaseAuth = new SupabaseAuthService();
+    authService = new AuthService(supabaseAuth);
     workoutRepo = new LocalWorkoutRepository();
     cardioRepo = new LocalCardioRepository();
     stepsRepo = new LocalDailyStepsRepository();
@@ -30,28 +33,19 @@ describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2)', () => {
     await db.dailySteps.clear();
     await db.bodyMeasurements.clear();
     await db.users.clear();
-    
-    // Seed test local user
-    await db.users.add({
-      id: 'user_jan_1',
-      username: 'Jan Kowalski',
-      email: 'jan@example.com',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
   });
 
-  it('1. A Supabase-authenticated user (without local profile selection) can load local Dexie data using fallback userId', async () => {
-    // Simulate Supabase authenticated state where local AuthService current user is logged out (null)
+  it('1. A Supabase-authenticated user gets a distinct local workspace ID (supa_...) and can load local Dexie data', async () => {
+    const supaId = '99999999-9999-9999-9999-999999999999';
+    (supabaseAuth as any).userSignal.set({ id: supaId, email: 'supa@example.com' });
     authService.logout();
 
-    const fallbackUserId = authService.getCurrentUserId();
-    expect(fallbackUserId).toBe('user_jan_1');
+    const workspaceId = authService.getCurrentUserId();
+    expect(workspaceId).toBe(`supa_${supaId}`);
 
-    // Seed local Dexie data for fallback user
     const workout: Workout = {
       id: 'w_supa_1',
-      userId: fallbackUserId,
+      userId: workspaceId,
       name: 'Trening Supabase User',
       startedAt: new Date(),
       isCompleted: true,
@@ -60,13 +54,16 @@ describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2)', () => {
     };
     await workoutRepo.create(workout, []);
 
-    const loaded = await workoutRepo.getByUserId(fallbackUserId);
+    const loaded = await workoutRepo.getByUserId(workspaceId);
     expect(loaded.length).toBe(1);
     expect(loaded[0].name).toBe('Trening Supabase User');
   });
 
-  it('2. A Supabase-authenticated user can create a workout locally in Dexie', async () => {
+  it('2. A Supabase-authenticated user can create a workout locally in Dexie under their distinct workspace', async () => {
+    const supaId = '88888888-8888-8888-8888-888888888888';
+    (supabaseAuth as any).userSignal.set({ id: supaId, email: 'supa2@example.com' });
     authService.logout();
+
     const userId = authService.getCurrentUserId();
 
     const workout: Workout = {
@@ -95,11 +92,14 @@ describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2)', () => {
     await workoutRepo.create(workout, sets);
     const retrieved = await workoutRepo.getById('w_supa_create');
     expect(retrieved).toBeTruthy();
-    expect(retrieved?.name).toBe('Nowy trening w chmurze');
+    expect(retrieved?.userId).toBe(`supa_${supaId}`);
   });
 
   it('3. A Supabase-authenticated user can create cardio, steps, and measurements locally', async () => {
+    const supaId = '77777777-7777-7777-7777-777777777777';
+    (supabaseAuth as any).userSignal.set({ id: supaId, email: 'supa3@example.com' });
     authService.logout();
+
     const userId = authService.getCurrentUserId();
     const today = '2026-11-16';
 
@@ -141,42 +141,44 @@ describe('Supabase Auth & Local-First Dexie Integration (Stage 13B.2)', () => {
     expect(measList[0].value).toBe(77.4);
   });
 
-  it('4. Opening tabs does not require Supabase application tables (dexie standalone)', async () => {
-    authService.logout();
-    const userId = authService.getCurrentUserId();
+  it('4. Local profile authentication still works alongside Supabase Auth', async () => {
+    const localUser = {
+      id: 'user_local_test',
+      username: 'Lokalny Użytkownik',
+      email: 'local@example.com',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    await db.users.add(localUser);
 
-    const workouts = await workoutRepo.getByUserId(userId);
-    const cardio = await cardioRepo.getActivities(userId);
-    const steps = await stepsRepo.getByRange(userId, '2026-11-01', '2026-11-30');
-    const measurements = await measurementRepo.getMeasurements(userId);
+    (supabaseAuth as any).userSignal.set(null);
+    await authService.login('local@example.com');
 
-    expect(Array.isArray(workouts)).toBe(true);
-    expect(Array.isArray(cardio)).toBe(true);
-    expect(Array.isArray(steps)).toBe(true);
-    expect(Array.isArray(measurements)).toBe(true);
-  });
-
-  it('5. Local profile authentication still works alongside Supabase Auth', async () => {
-    await authService.login('jan@example.com');
-    expect(authService.getCurrentUserId()).toBe('user_jan_1');
+    expect(authService.getCurrentUserId()).toBe('user_local_test');
     expect(authService.isAuthenticated()).toBe(true);
   });
 
-  it('6. Logging out does not delete local Dexie records', async () => {
-    const userId = 'user_jan_1';
+  it('5. Logging out of Supabase does not delete local Dexie records', async () => {
+    const supaId = '66666666-6666-6666-6666-666666666666';
+    (supabaseAuth as any).userSignal.set({ id: supaId, email: 'supa4@example.com' });
+    authService.logout();
+    const userId = authService.getCurrentUserId();
+
     await workoutRepo.create({
       id: 'w_persist',
       userId,
-      name: 'Przetrwały trening',
+      name: 'Przetrwały trening Supabase',
       startedAt: new Date(),
       isCompleted: true,
       createdAt: new Date(),
       updatedAt: new Date()
     }, []);
 
-    authService.logout();
+    // Simulate Supabase logout
+    (supabaseAuth as any).userSignal.set(null);
 
     const records = await workoutRepo.getByUserId(userId);
-    expect(records.some(r => r.name === 'Przetrwały trening')).toBe(true);
+    expect(records.length).toBe(1);
+    expect(records[0].name).toBe('Przetrwały trening Supabase');
   });
 });

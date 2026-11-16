@@ -3,6 +3,7 @@ import { User } from '../../data-access/contracts/user.model';
 import { LocalUserRepository } from '../../data-access/local/local-user.repository';
 import { LocalSettingsRepository } from '../../data-access/local/local-settings.repository';
 import { DatabaseSeedService } from '../database/database-seed.service';
+import { SupabaseAuthService } from './supabase-auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,9 +16,9 @@ export class AuthService {
   private currentUserSignal = signal<User | null>(null);
 
   currentUser = this.currentUserSignal.asReadonly();
-  isAuthenticated = computed(() => !!this.currentUserSignal());
+  isAuthenticated = computed(() => !!this.currentUserSignal() || (this.supabaseAuth?.isAuthenticated() ?? false));
 
-  constructor() {
+  constructor(private supabaseAuth?: SupabaseAuthService) {
     this.initAuth();
   }
 
@@ -149,7 +150,30 @@ export class AuthService {
   }
 
   getCurrentUserId(): string {
-    const user = this.currentUserSignal();
-    return user ? user.id : 'user_jan_1';
+    const localUser = this.currentUserSignal();
+    if (localUser) {
+      return localUser.id;
+    }
+
+    const supaUser = this.supabaseAuth?.currentUser?.();
+    if (supaUser && supaUser.id) {
+      const workspaceId = `supa_${supaUser.id}`;
+      this.userRepository.getById(workspaceId).then(existing => {
+        if (!existing) {
+          const email = supaUser.email || 'supabase@user.local';
+          const username = supaUser.user_metadata?.['username'] || email.split('@')[0];
+          this.userRepository.create({
+            id: workspaceId,
+            username,
+            email,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }).catch(() => {});
+        }
+      });
+      return workspaceId;
+    }
+
+    throw new Error('Brak aktywnego uwierzytelnionego użytkownika. Zaloguj się, aby kontynuować.');
   }
 }
