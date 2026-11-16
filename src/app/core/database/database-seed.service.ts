@@ -29,6 +29,34 @@ export class DatabaseSeedService {
         }));
         await db.exercises.bulkAdd(mappedExercises as any);
       }
+
+      const cardioTypesCount = await db.cardioTypes.count();
+      if (cardioTypesCount === 0) {
+        await db.cardioTypes.bulkAdd([
+          { id: 'cardio_treadmill', name: 'Bieżnia', isSystem: true },
+          { id: 'cardio_running', name: 'Bieganie (teren)', isSystem: true },
+          { id: 'cardio_cycling', name: 'Rower', isSystem: true },
+          { id: 'cardio_swimming', name: 'Basen / Pływanie', isSystem: true },
+          { id: 'cardio_rowing', name: 'Wioślarz', isSystem: true },
+          { id: 'cardio_elliptical', name: 'Orbitrek', isSystem: true },
+          { id: 'cardio_walking', name: 'Marsz / Spacer', isSystem: true },
+          { id: 'cardio_other', name: 'Inne', isSystem: true }
+        ]);
+      }
+
+      const measTypesCount = await db.measurementTypes.count();
+      if (measTypesCount === 0) {
+        await db.measurementTypes.bulkAdd([
+          { id: 'meas_type_weight', name: 'Waga ciała', unit: 'kg', isSystem: true },
+          { id: 'meas_type_bf', name: 'Tkanka tłuszczowa', unit: '%', isSystem: true },
+          { id: 'meas_type_chest', name: 'Klatka piersiowa', unit: 'cm', isSystem: true },
+          { id: 'meas_type_waist', name: 'Pas', unit: 'cm', isSystem: true },
+          { id: 'meas_type_hips', name: 'Biodra', unit: 'cm', isSystem: true },
+          { id: 'meas_type_arm', name: 'Ramię', unit: 'cm', isSystem: true },
+          { id: 'meas_type_thigh', name: 'Udo', unit: 'cm', isSystem: true },
+          { id: 'meas_type_calf', name: 'Łydka', unit: 'cm', isSystem: true }
+        ]);
+      }
     } catch (err) {
       console.error('Error seeding database:', err);
     }

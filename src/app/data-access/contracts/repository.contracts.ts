@@ -41,6 +41,7 @@ export interface WorkoutPlanRepository extends BaseRepository<WorkoutPlan> {}
 
 export interface MeasurementRepository {
   getTypes(userId?: string): Promise<MeasurementType[]>;
+  createMeasurementType(type: MeasurementType): Promise<string>;
   getMeasurements(userId: string): Promise<BodyMeasurement[]>;
   createMeasurement(measurement: BodyMeasurement): Promise<string>;
   updateMeasurement(id: string, changes: Partial<BodyMeasurement>): Promise<void>;
