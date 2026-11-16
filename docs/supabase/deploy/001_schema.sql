@@ -16,9 +16,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Revoke execute from public for security hardening
-REVOKE EXECUTE ON FUNCTION public.handle_updated_at() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.handle_updated_at() TO authenticated, service_role;
+-- Revoke execute from public/anon/authenticated for internal trigger function
+REVOKE EXECUTE ON FUNCTION public.handle_updated_at() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.handle_updated_at() TO service_role;
 
 -- ============================================================================
 -- 1. Profiles Table (Table 1 of 14)
@@ -58,8 +58,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created

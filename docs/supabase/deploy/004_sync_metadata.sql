@@ -21,8 +21,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-REVOKE EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) TO authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_deltas(UUID, TEXT, TIMESTAMPTZ) TO service_role;
 
 -- Additional indexes to optimize delta sync queries by updated_at_utc and deleted_at
 CREATE INDEX IF NOT EXISTS idx_workouts_sync ON public.workouts(user_id, updated_at_utc);
