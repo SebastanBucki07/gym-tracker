@@ -128,12 +128,13 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: NOT STARTED
-- [ ] Supabase Auth, PostgreSQL, RLS, Storage.
+Status: IN PROGRESS (Stage 13A & 13A.1 Schema & Security Hardening Prepared)
+- [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
+- [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 12 — Final QA, stabilization and release readiness: full application audit across functional correctness, data persistence, multi-user isolation, offline resilience, PWA installation, test suite verification (51 tests passed), warning-free production build, and QA report documentation.
+Stage 13A.1 — Supabase schema and security hardening: hardened PostgreSQL schema (`proposed-schema.sql`), trigger-based profile provisioning, strict table check constraints, hardened RLS policies (`proposed-rls.sql`), private Storage RLS policies (`proposed-storage-rls.sql`), and schema review documentation (`SCHEMA_REVIEW.md`).
