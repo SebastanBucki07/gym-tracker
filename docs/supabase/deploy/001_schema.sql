@@ -155,7 +155,6 @@ CREATE TABLE IF NOT EXISTS public.workouts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     sync_status TEXT NOT NULL DEFAULT 'synced',
-    updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 
