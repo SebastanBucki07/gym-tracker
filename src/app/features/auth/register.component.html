@@ -2,6 +2,23 @@
   <div class="auth-card">
     <h1>Gym Tracker</h1>
     <h2>Rejestracja</h2>
+
+    <div class="auth-mode-tabs">
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="authMode() === 'local'" 
+        (click)="setMode('local')">
+        Profil lokalny
+      </button>
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="authMode() === 'supabase'" 
+        (click)="setMode('supabase')">
+        Supabase Cloud Auth
+      </button>
+    </div>
     
     @if (errorMessage()) {
       <div class="alert error">{{ errorMessage() }}</div>
@@ -18,8 +35,15 @@
         <input id="email" type="email" formControlName="email" placeholder="Wprowadź e-mail" />
       </div>
 
+      @if (authMode() === 'supabase') {
+        <div class="form-group">
+          <label for="password">Hasło (Supabase, min. 6 znaków)</label>
+          <input id="password" type="password" formControlName="password" placeholder="Wprowadź hasło" />
+        </div>
+      }
+
       <button type="submit" class="btn primary" [disabled]="registerForm.invalid || loading()">
-        {{ loading() ? 'Rejestrowanie...' : 'Zarejestruj się' }}
+        {{ loading() ? 'Rejestrowanie...' : (authMode() === 'supabase' ? 'Zarejestruj w Supabase' : 'Zarejestruj lokalnie') }}
       </button>
     </form>
 

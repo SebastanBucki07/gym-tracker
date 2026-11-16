@@ -128,14 +128,15 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13A.2 Final SQL Review & Deployment Readiness Completed)
+Status: IN PROGRESS (Stage 13B Supabase Auth Implementation Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
+- [x] Supabase Auth implementation (`SupabaseAuthService`, login/signup UI, environment configuration, and local-first guarantees, Stage 13B).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13A.2 — Final SQL review and deployment readiness: robust profile creation trigger with fallback name generation, email protection, 14-table schema inventory, storage RLS policies, deployment order guidance, and deployment readiness documentation (`DEPLOYMENT_READINESS.md`).
+Stage 13B — Supabase Auth implementation: integration of `@supabase/supabase-js` client library, environment configuration with graceful placeholders, `SupabaseAuthService` with reactive session signals, dual auth mode login/signup UI components, local-first safety guarantees preserving Dexie storage, and comprehensive unit tests.
