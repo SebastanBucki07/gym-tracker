@@ -120,12 +120,12 @@ Status: COMPLETED
   - Browser limitations: `beforeinstallprompt` is standard on Chromium browsers (Chrome, Edge, Android Webview); iOS Safari requires "Add to Home Screen" from the Share menu.
 
 ## Stage 12 — Final QA
-Status: NOT STARTED
-- [ ] Full unit/integration suite.
-- [ ] Playwright critical flows and user isolation.
-- [ ] Accessibility/responsive/performance review.
-- [ ] Production build and documentation.
-- [ ] Final commits.
+Status: COMPLETED
+- [x] Full unit/integration suite.
+- [x] Playwright critical flows and user isolation.
+- [x] Accessibility/responsive/performance review.
+- [x] Production build and documentation.
+- [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
 Status: NOT STARTED
@@ -136,4 +136,4 @@ Status: NOT STARTED
 - [ ] Commit.
 
 ## Current task
-Stage 11 — PWA/offline: complete PWA implementation with web app manifest, standard/maskable icons, Angular Service Worker caching app shell and static assets, offline detection with localized banners, PWA install prompt integration, and offline persistence validation.
+Stage 12 — Final QA, stabilization and release readiness: full application audit across functional correctness, data persistence, multi-user isolation, offline resilience, PWA installation, test suite verification (51 tests passed), warning-free production build, and QA report documentation.
