@@ -85,12 +85,12 @@ Status: NOT STARTED
 - [ ] Tests and commit.
 
 ## Stage 8 — Cardio, steps, measurements
-Status: NOT STARTED
-- [ ] Cardio type catalog and activity CRUD.
-- [ ] Daily steps upsert and uniqueness.
-- [ ] Measurement type catalog and independent records.
-- [ ] History and charts.
-- [ ] Tests and commit.
+Status: COMPLETED
+- [x] Cardio type catalog and activity CRUD.
+- [x] Daily steps upsert and uniqueness.
+- [x] Measurement type catalog and independent records.
+- [x] History and charts.
+- [x] Tests and commit.
 
 ## Stage 9 — Progress photos and calendar
 Status: COMPLETED
@@ -128,4 +128,4 @@ Status: NOT STARTED
 - [ ] Commit.
 
 ## Current task
-Stage 5 — Workout engine: empty workout and plan-based workout, exercise management, set management, autosave/resume, completion, volume calculations and tests.
+Stage 8 — Cardio, steps, measurements: cardio type catalog and activity CRUD, daily steps upsert and uniqueness, measurement type catalog and independent records, history and Apache ECharts progression charts, tests, and calendar integration.

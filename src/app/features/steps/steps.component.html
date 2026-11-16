@@ -1,0 +1,78 @@
+<div class="steps-container">
+  <header class="steps-header">
+    <div class="header-title">
+      <a routerLink="/dashboard" class="back-link">← Panel główny</a>
+      <h2>Dzienne kroki</h2>
+    </div>
+  </header>
+
+  <div class="steps-content-grid">
+    <div class="form-card">
+      <h3>Zarejestruj kroki</h3>
+      <form [formGroup]="stepsForm" (ngSubmit)="saveSteps()">
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" formControlName="date" />
+        </div>
+
+        <div class="form-group">
+          <label>Liczba kroków</label>
+          <input type="number" formControlName="stepsCount" min="0" max="200000" />
+        </div>
+
+        <button type="submit" class="btn primary full" [disabled]="stepsForm.invalid">Zapisz kroki</button>
+      </form>
+    </div>
+
+    <div class="stats-and-history">
+      <div class="stats-cards">
+        <div class="stat-card">
+          <h4>Średnia dzienna</h4>
+          <p class="stat-value">{{ getAverageSteps() }}</p>
+        </div>
+        <div class="stat-card">
+          <h4>Rejestry w bazie</h4>
+          <p class="stat-value">{{ stepsHistory().length }}</p>
+        </div>
+      </div>
+
+      <div class="history-card">
+        <h3>Historia kroków</h3>
+        @if (loading()) {
+          <p class="loading-text">Ładowanie...</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="steps-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Kroki</th>
+                  <th>Cel (10k)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of stepsHistory(); track item.id) {
+                  <tr>
+                    <td>{{ formatDate(item.date) }}</td>
+                    <td><strong>{{ item.stepsCount }}</strong></td>
+                    <td>
+                      @if (item.stepsCount >= 10000) {
+                        <span class="badge success">✔️ Osiągnięty</span>
+                      } @else {
+                        <span class="badge muted">W trakcie</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="empty-state">Brak zarejestrowanych kroków.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

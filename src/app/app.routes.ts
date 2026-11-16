@@ -44,6 +44,21 @@ export const routes: Routes = [
     loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent)
   },
   {
+    path: 'cardio',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/cardio/cardio.component').then(m => m.CardioComponent)
+  },
+  {
+    path: 'steps',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/steps/steps.component').then(m => m.StepsComponent)
+  },
+  {
+    path: 'measurements',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/measurements/measurements.component').then(m => m.MeasurementsComponent)
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full'

@@ -1,0 +1,99 @@
+<div class="cardio-container">
+  <header class="cardio-header">
+    <div class="header-title">
+      <a routerLink="/dashboard" class="back-link">← Panel główny</a>
+      <h2>Aktywności Cardio</h2>
+    </div>
+    <button class="btn primary" (click)="openCreateModal()">+ Dodaj aktywność cardio</button>
+  </header>
+
+  @if (loading()) {
+    <p class="loading-text">Ładowanie aktywności...</p>
+  } @else {
+    <div class="cardio-grid">
+      @for (act of cardioActivities(); track act.id) {
+        <div class="cardio-card">
+          <div class="card-top">
+            <h3>🏃 {{ getCardioTypeName(act.cardioTypeId) }}</h3>
+            <span class="date">{{ formatDate(act.performedAt) }}</span>
+          </div>
+          <div class="card-details">
+            <p><strong>Czas trwania:</strong> {{ act.durationMinutes }} min</p>
+            @if (act.distanceKm) {
+              <p><strong>Dystans:</strong> {{ act.distanceKm }} km</p>
+            }
+            @if (act.calories) {
+              <p><strong>Kalorie:</strong> {{ act.calories }} kcal</p>
+            }
+            @if (act.averageHeartRate) {
+              <p><strong>Średnie tętno:</strong> {{ act.averageHeartRate }} bpm</p>
+            }
+            @if (act.note) {
+              <p class="note"><strong>Notatka:</strong> {{ act.note }}</p>
+            }
+          </div>
+          <div class="card-actions">
+            <button class="btn secondary sm" (click)="openEditModal(act)">Edytuj</button>
+            <button class="btn danger sm" (click)="deleteActivity(act.id)">Usuń</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="empty-state">Brak zarejestrowanych aktywności cardio. Dodaj pierwszą!</p>
+      }
+    </div>
+  }
+
+  @if (isCreating()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>{{ editingId() ? 'Edytuj aktywność cardio' : 'Nowa aktywność cardio' }}</h3>
+        
+        <form [formGroup]="cardioForm" (ngSubmit)="saveCardio()">
+          <div class="form-group">
+            <label>Rodzaj cardio</label>
+            <select formControlName="cardioTypeId">
+              @for (type of cardioTypes(); track type.id) {
+                <option [value]="type.id">{{ type.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" formControlName="performedAt" />
+          </div>
+
+          <div class="form-group">
+            <label>Czas trwania (minuty)</label>
+            <input type="number" formControlName="durationMinutes" min="1" />
+          </div>
+
+          <div class="form-group">
+            <label>Dystans (km, opcjonalnie)</label>
+            <input type="number" step="0.1" formControlName="distanceKm" placeholder="np. 5.2" />
+          </div>
+
+          <div class="form-group">
+            <label>Spalone kalorie (kcal, opcjonalnie)</label>
+            <input type="number" formControlName="calories" placeholder="np. 400" />
+          </div>
+
+          <div class="form-group">
+            <label>Średnie tętno (bpm, opcjonalnie)</label>
+            <input type="number" formControlName="averageHeartRate" placeholder="np. 140" />
+          </div>
+
+          <div class="form-group">
+            <label>Notatka (opcjonalnie)</label>
+            <textarea formControlName="note" placeholder="Wrażenia, intensywność..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn primary" [disabled]="cardioForm.invalid">Zapisz</button>
+            <button type="button" class="btn secondary" (click)="closeModal()">Anuluj</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

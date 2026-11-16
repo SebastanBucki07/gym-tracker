@@ -12,6 +12,11 @@ export class LocalMeasurementRepository implements MeasurementRepository {
       .toArray();
   }
 
+  async createMeasurementType(type: MeasurementType): Promise<string> {
+    await db.measurementTypes.add(type);
+    return type.id;
+  }
+
   async getMeasurements(userId: string): Promise<BodyMeasurement[]> {
     return await db.bodyMeasurements.where('userId').equals(userId).toArray();
   }
