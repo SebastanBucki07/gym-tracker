@@ -10,32 +10,159 @@
       }
     </div>
     <div class="header-actions">
-      <a routerLink="/calendar" class="btn link-btn">📅 Kalendarz</a>
-      <a routerLink="/cardio" class="btn link-btn">🏃 Cardio</a>
-      <a routerLink="/steps" class="btn link-btn">👟 Kroki</a>
-      <a routerLink="/measurements" class="btn link-btn">📏 Pomiary</a>
-      <a routerLink="/progress-photos" class="btn link-btn">📸 Zdjęcia</a>
-      <a routerLink="/workouts/history" class="btn link-btn">📜 Historia</a>
-      <a routerLink="/exercises" class="btn link-btn">Katalog</a>
+      <select [value]="selectedPreset()" (change)="onPresetChange($event)" class="range-select">
+        <option value="current-week">Bieżący tydzień</option>
+        <option value="previous-week">Poprzedni tydzień</option>
+        <option value="current-month">Bieżący miesiąc</option>
+        <option value="all">Cały okres</option>
+      </select>
       <button class="btn logout" (click)="logout()">Wyloguj się</button>
     </div>
   </header>
 
-  <main class="dashboard-content">
-    <div class="welcome-card">
-      <h3>Panel główny Gym Tracker</h3>
-      <p>Lokalna sesja użytkownika jest aktywna. Dane są bezpiecznie izolowane w IndexedDB.</p>
-      
-      <div class="quick-actions mt-3">
-        <a routerLink="/workouts/active" class="btn primary">💪 Rozpocznij trening</a>
-        <a routerLink="/workouts/history" class="btn secondary">📜 Historia</a>
-        <a routerLink="/cardio" class="btn secondary">🏃 Cardio</a>
-        <a routerLink="/steps" class="btn secondary">👟 Kroki</a>
-        <a routerLink="/measurements" class="btn secondary">📏 Pomiary</a>
-        <a routerLink="/calendar" class="btn secondary">📅 Kalendarz</a>
-        <a routerLink="/progress-photos" class="btn secondary">📸 Zdjęcia sylwetkowe</a>
-        <a routerLink="/exercises" class="btn secondary">📋 Katalog ćwiczeń</a>
+  <div class="quick-nav-bar">
+    <a routerLink="/workouts/active" class="btn primary">💪 Nowy trening</a>
+    <a routerLink="/workouts/history" class="btn secondary">📜 Historia</a>
+    <a routerLink="/cardio" class="btn secondary">🏃 Cardio</a>
+    <a routerLink="/steps" class="btn secondary">👟 Kroki</a>
+    <a routerLink="/measurements" class="btn secondary">📏 Pomiary</a>
+    <a routerLink="/calendar" class="btn secondary">📅 Kalendarz</a>
+    <a routerLink="/progress-photos" class="btn secondary">📸 Zdjęcia</a>
+    <a routerLink="/exercises" class="btn secondary">📋 Katalog</a>
+  </div>
+
+  @if (loading()) {
+    <p class="loading-text">Ładowanie statystyk...</p>
+  } @else if (summary(); as s) {
+    <main class="dashboard-content">
+      <!-- Summary Cards Grid -->
+      <div class="stats-grid">
+        <!-- Strength -->
+        <div class="stat-card">
+          <div class="card-icon">💪</div>
+          <div class="card-info">
+            <h4>Treningi siłowe</h4>
+            <p class="stat-main">{{ s.strength.workoutsCount }} <span class="unit">sesji</span></p>
+            <p class="stat-sub">Objętość: <strong>{{ s.strength.totalVolume.toLocaleString() }} kg</strong></p>
+            <p class="stat-sub">Czas: {{ formatDuration(s.strength.totalDurationSeconds) }} | Serie: {{ s.strength.totalSets }}</p>
+          </div>
+        </div>
+
+        <!-- Cardio -->
+        <div class="stat-card">
+          <div class="card-icon">🏃</div>
+          <div class="card-info">
+            <h4>Aktywności Cardio</h4>
+            <p class="stat-main">{{ s.cardio.sessionsCount }} <span class="unit">treningów</span></p>
+            <p class="stat-sub">Dystans: <strong>{{ s.cardio.totalDistanceKm }} km</strong> | Czas: {{ s.cardio.totalDurationMinutes }} min</p>
+            <p class="stat-sub">Spalone kalorie: {{ s.cardio.totalCalories }} kcal</p>
+          </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="stat-card">
+          <div class="card-icon">👟</div>
+          <div class="card-info">
+            <h4>Dzienne kroki</h4>
+            <p class="stat-main">{{ s.steps.averageDailySteps.toLocaleString() }} <span class="unit">śr. dzienna</span></p>
+            <p class="stat-sub">Suma okresu: <strong>{{ s.steps.totalSteps.toLocaleString() }}</strong></p>
+            <p class="stat-sub">Cel osiągnięto: {{ s.steps.daysMeetingGoal }} / {{ s.steps.daysCount }} dni</p>
+          </div>
+        </div>
+
+        <!-- Measurements -->
+        <div class="stat-card">
+          <div class="card-icon">📏</div>
+          <div class="card-info">
+            <h4>Waga ciała</h4>
+            <p class="stat-main">
+              @if (s.measurements.latestWeight !== undefined) {
+                {{ s.measurements.latestWeight }} <span class="unit">kg</span>
+              } @else {
+                Brak pomiaru
+              }
+            </p>
+            @if (s.measurements.weightChange !== undefined) {
+              <p class="stat-sub">
+                Zmiana: 
+                <strong [class.positive]="s.measurements.weightChange! < 0" [class.negative]="s.measurements.weightChange! > 0">
+                  {{ s.measurements.weightChange > 0 ? '+' + s.measurements.weightChange : s.measurements.weightChange }} kg
+                </strong>
+              </p>
+            }
+          </div>
+        </div>
       </div>
-    </div>
-  </main>
+
+      <!-- Muscle Visualization & Details Grid -->
+      <div class="muscle-viz-section">
+        <app-muscle-visualization 
+          [muscleActivities]="s.muscleActivities" 
+          (selectedMuscle)="onMuscleSelected($event)">
+        </app-muscle-visualization>
+
+        <div class="muscle-details-card">
+          <h3>Szczegóły partii mięśniowej</h3>
+          @if (selectedMuscle(); as m) {
+            <div class="details-content">
+              <h4>{{ m.muscleName }}</h4>
+              <p><strong>Ostatni trening:</strong> {{ formatDate(m.lastTrainedDate) }} (@if(m.daysAgo !== undefined){{{ m.daysAgo }} dni temu} @else{Brak})</p>
+              <p><strong>Liczba sesji w okresie:</strong> {{ m.workoutCount }}</p>
+              <p><strong>Objętość serii roboczych:</strong> {{ m.workingSetsCount }}</p>
+              <div class="recent-exercises">
+                <strong>Ostatnie ćwiczenia:</strong>
+                @if (m.recentExercises.length > 0) {
+                  <ul>
+                    @for (ex of m.recentExercises; track ex) {
+                      <li>{{ ex }}</li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="text-muted">Brak ćwiczeń w wybranym okresie.</p>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="select-prompt">Kliknij na mapie mięśniowej lub wybierz partię mięśniową z listy, aby zobaczyć szczegóły i statystyki regeneracji.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Recent Measurements & Cardio Breakdown -->
+      <div class="details-grid">
+        <div class="detail-card">
+          <h3>Ostatnie pomiary ciała</h3>
+          @if (s.measurements.recentMeasurements.length > 0) {
+            <ul class="measurements-list">
+              @for (m of s.measurements.recentMeasurements; track m.date) {
+                <li>
+                  <span class="type">{{ m.typeName }}</span>
+                  <span class="val"><strong>{{ m.value }} {{ m.unit }}</strong></span>
+                  <span class="dt">{{ formatDate(m.date) }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-text">Brak zapisanych pomiarów.</p>
+          }
+        </div>
+
+        <div class="detail-card">
+          <h3>Podział aktywności cardio</h3>
+          @if (s.cardio.typeBreakdown.length > 0) {
+            <ul class="cardio-breakdown-list">
+              @for (item of s.cardio.typeBreakdown; track item.typeName) {
+                <li>
+                  <span class="type">🏃 {{ item.typeName }}</span>
+                  <span class="stat">{{ item.count }} sesji ({{ item.duration }} min)</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-text">Brak aktywności cardio w wybranym okresie.</p>
+          }
+        </div>
+      </div>
+    </main>
+  }
 </div>

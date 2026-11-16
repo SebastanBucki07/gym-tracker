@@ -3,6 +3,7 @@ import { db } from '../../data-access/local/app-database';
 import muscleGroupsData from '../../../assets/data/muscle-groups.json';
 import equipmentCategoriesData from '../../../assets/data/equipment-categories.json';
 import exercisesData from '../../../assets/data/exercises.json';
+import { CANONICAL_BODY_WEIGHT_TYPE_ID, SYSTEM_MEASUREMENT_TYPES } from '../../data-access/contracts/measurement.model';
 
 @Injectable({
   providedIn: 'root'
@@ -44,21 +45,59 @@ export class DatabaseSeedService {
         ]);
       }
 
-      const measTypesCount = await db.measurementTypes.count();
-      if (measTypesCount === 0) {
-        await db.measurementTypes.bulkAdd([
-          { id: 'meas_type_weight', name: 'Waga ciała', unit: 'kg', isSystem: true },
-          { id: 'meas_type_bf', name: 'Tkanka tłuszczowa', unit: '%', isSystem: true },
-          { id: 'meas_type_chest', name: 'Klatka piersiowa', unit: 'cm', isSystem: true },
-          { id: 'meas_type_waist', name: 'Pas', unit: 'cm', isSystem: true },
-          { id: 'meas_type_hips', name: 'Biodra', unit: 'cm', isSystem: true },
-          { id: 'meas_type_arm', name: 'Ramię', unit: 'cm', isSystem: true },
-          { id: 'meas_type_thigh', name: 'Udo', unit: 'cm', isSystem: true },
-          { id: 'meas_type_calf', name: 'Łydka', unit: 'cm', isSystem: true }
-        ]);
+      // Idempotent system measurement types seeding
+      for (const st of SYSTEM_MEASUREMENT_TYPES) {
+        const existing = await db.measurementTypes.get(st.id);
+        if (!existing) {
+          await db.measurementTypes.put(st);
+        }
       }
+
+      // Safe migration and deduplication of previously seeded duplicate measurement types
+      await this.migrateAndDeduplicateMeasurementTypes();
     } catch (err) {
       console.error('Error seeding database:', err);
+    }
+  }
+
+  async migrateAndDeduplicateMeasurementTypes(): Promise<void> {
+    try {
+      // 1. Ensure canonical body weight type is in place
+      await db.measurementTypes.put({
+        id: CANONICAL_BODY_WEIGHT_TYPE_ID,
+        name: 'Waga ciała',
+        unit: 'kg',
+        isSystem: true
+      });
+
+      // 2. Identify duplicate body weight types
+      const allTypes = await db.measurementTypes.toArray();
+      const duplicateWeightTypes = allTypes.filter(t => {
+        if (t.id === CANONICAL_BODY_WEIGHT_TYPE_ID) return false;
+        const isWeightName = t.name.trim().toLowerCase() === 'waga ciała' || t.name.trim().toLowerCase() === 'waga';
+        const isWeightUnit = t.unit.trim().toLowerCase() === 'kg';
+        const isOldSeeded = t.id.startsWith('type_weight_');
+        return isOldSeeded || (isWeightName && isWeightUnit && t.isSystem);
+      });
+
+      for (const dup of duplicateWeightTypes) {
+        // Reassign any measurements pointing to the duplicate type to the canonical type
+        const affectedMeasurements = await db.bodyMeasurements
+          .where('measurementTypeId')
+          .equals(dup.id)
+          .toArray();
+
+        for (const m of affectedMeasurements) {
+          await db.bodyMeasurements.update(m.id, {
+            measurementTypeId: CANONICAL_BODY_WEIGHT_TYPE_ID
+          });
+        }
+
+        // Delete the duplicate type
+        await db.measurementTypes.delete(dup.id);
+      }
+    } catch (err) {
+      console.error('Error migrating and deduplicating measurement types:', err);
     }
   }
 
@@ -71,26 +110,19 @@ export class DatabaseSeedService {
       const yesterday = new Date(now.getTime() - 86400000);
       const threeDaysAgo = new Date(now.getTime() - 86400000 * 3);
 
-      // 1. Seed Measurement Types if none
-      const mTypes = await db.measurementTypes.where('userId').equals(userId).toArray();
-      let weightTypeId = 'type_weight_' + userId;
-      if (mTypes.length === 0) {
-        await db.measurementTypes.add({
-          id: weightTypeId,
-          userId,
-          name: 'Waga ciała',
-          unit: 'kg',
-          isSystem: true
-        });
-      } else {
-        weightTypeId = mTypes[0].id;
-      }
+      // 1. Ensure canonical measurement type exists
+      await db.measurementTypes.put({
+        id: CANONICAL_BODY_WEIGHT_TYPE_ID,
+        name: 'Waga ciała',
+        unit: 'kg',
+        isSystem: true
+      });
 
-      // 2. Seed Body Measurement
+      // 2. Seed Body Measurement referencing canonical body weight type
       await db.bodyMeasurements.add({
         id: 'meas_' + crypto.randomUUID(),
         userId,
-        measurementTypeId: weightTypeId,
+        measurementTypeId: CANONICAL_BODY_WEIGHT_TYPE_ID,
         value: 78.5,
         measuredAt: threeDaysAgo,
         notes: 'Pomiar początkowy'

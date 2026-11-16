@@ -99,11 +99,11 @@ Status: COMPLETED
 - [x] Tests and commit.
 
 ## Stage 10 — Dashboard and muscle visualization
-Status: NOT STARTED
-- [ ] Weekly statistics and charts.
-- [ ] Muscle visualization front/back.
-- [ ] Last-trained calculation.
-- [ ] Tests and commit.
+Status: COMPLETED
+- [x] Weekly statistics and charts.
+- [x] Muscle visualization front/back.
+- [x] Last-trained calculation.
+- [x] Tests and commit.
 
 ## Stage 11 — PWA/offline
 Status: NOT STARTED
@@ -128,4 +128,4 @@ Status: NOT STARTED
 - [ ] Commit.
 
 ## Current task
-Stage 8 — Cardio, steps, measurements: cardio type catalog and activity CRUD, daily steps upsert and uniqueness, measurement type catalog and independent records, history and Apache ECharts progression charts, tests, and calendar integration.
+Stage 10 — Dashboard and muscle visualization: weekly statistics and charts, interactive front/back muscle visualization, last-trained calculations, weighted muscle involvement, date range selector, unit tests, and production build verification.

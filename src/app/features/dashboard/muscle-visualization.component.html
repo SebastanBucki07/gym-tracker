@@ -1,0 +1,86 @@
+<div class="muscle-viz-container">
+  <div class="viz-header">
+    <h3>Mapa aktywności mięśniowej</h3>
+    <div class="view-toggles">
+      <button 
+        class="btn sm" 
+        [class.primary]="currentView() === 'front'" 
+        [class.secondary]="currentView() !== 'front'"
+        (click)="setView('front')">
+        Przód
+      </button>
+      <button 
+        class="btn sm" 
+        [class.primary]="currentView() === 'back'" 
+        [class.secondary]="currentView() !== 'back'"
+        (click)="setView('back')">
+        Tył
+      </button>
+    </div>
+  </div>
+
+  <div class="body-diagram-area">
+    @if (currentView() === 'front') {
+      <div class="diagram-pane front-pane">
+        <div class="muscle-zone shoulders" [class]="getIntensityClass('shoulders')" (click)="selectMuscle('shoulders')" title="Barki">
+          <span>Barki</span>
+        </div>
+        <div class="muscle-zone chest" [class]="getIntensityClass('chest')" (click)="selectMuscle('chest')" title="Klatka piersiowa">
+          <span>Klatka</span>
+        </div>
+        <div class="muscle-zone biceps" [class]="getIntensityClass('biceps')" (click)="selectMuscle('biceps')" title="Biceps">
+          <span>Biceps</span>
+        </div>
+        <div class="muscle-zone abs" [class]="getIntensityClass('abs')" (click)="selectMuscle('abs')" title="Brzuch">
+          <span>Brzuch</span>
+        </div>
+        <div class="muscle-zone quads" [class]="getIntensityClass('quadriceps')" (click)="selectMuscle('quadriceps')" title="Czworogłowe uda">
+          <span>Czworogłowe</span>
+        </div>
+        <div class="muscle-zone calves" [class]="getIntensityClass('calves')" (click)="selectMuscle('calves')" title="Łydki">
+          <span>Łydki</span>
+        </div>
+      </div>
+    } @else {
+      <div class="diagram-pane back-pane">
+        <div class="muscle-zone traps" [class]="getIntensityClass('traps')" (click)="selectMuscle('traps')" title="Czworoboczne">
+          <span>Kaptury</span>
+        </div>
+        <div class="muscle-zone back" [class]="getIntensityClass('back')" (click)="selectMuscle('back')" title="Plecy">
+          <span>Plecy</span>
+        </div>
+        <div class="muscle-zone triceps" [class]="getIntensityClass('triceps')" (click)="selectMuscle('triceps')" title="Triceps">
+          <span>Triceps</span>
+        </div>
+        <div class="muscle-zone glutes" [class]="getIntensityClass('glutes')" (click)="selectMuscle('glutes')" title="Pośladki">
+          <span>Pośladki</span>
+        </div>
+        <div class="muscle-zone hamstrings" [class]="getIntensityClass('hamstrings')" (click)="selectMuscle('hamstrings')" title="Dwugłowe uda">
+          <span>Dwugłowe uda</span>
+        </div>
+        <div class="muscle-zone calves-back" [class]="getIntensityClass('calves')" (click)="selectMuscle('calves')" title="Łydki">
+          <span>Łydki</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot high"></span> Ostatnio (≤3 dni)</div>
+    <div class="legend-item"><span class="dot medium"></span> Niedawno (≤7 dni)</div>
+    <div class="legend-item"><span class="dot low"></span> Dawno (>7 dni)</div>
+    <div class="legend-item"><span class="dot none"></span> Brak</div>
+  </div>
+
+  <div class="muscle-chips-list">
+    @for (m of muscleActivities; track m.muscleGroupId) {
+      <button 
+        class="muscle-chip" 
+        [class.active]="activeMuscleId() === m.muscleGroupId"
+        [class]="'intensity-' + m.intensity"
+        (click)="selectMuscle(m.muscleGroupId)">
+        {{ m.muscleName }}
+      </button>
+    }
+  </div>
+</div>

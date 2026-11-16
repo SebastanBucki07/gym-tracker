@@ -58,4 +58,23 @@ describe('LocalMeasurementRepository', () => {
     list = await repo.getMeasurements('user_1');
     expect(list.length).toBe(0);
   });
+
+  it('should return deduplicated types prioritizing canonical body weight type', async () => {
+    // Add canonical type and duplicate legacy system types
+    await db.measurementTypes.bulkAdd([
+      { id: 'meas_type_weight', name: 'Waga ciała', unit: 'kg', isSystem: true },
+      { id: 'type_weight_user_1', userId: 'user_1', name: 'Waga ciała', unit: 'kg', isSystem: true },
+      { id: 'type_weight_user_2', userId: 'user_2', name: 'Waga ciała', unit: 'kg', isSystem: true },
+      { id: 'custom_type_chest', userId: 'user_1', name: 'Klatka własna', unit: 'cm', isSystem: false }
+    ]);
+
+    const types = await repo.getTypes('user_1');
+    const weightTypes = types.filter(t => t.name.toLowerCase().includes('waga') || t.id === 'meas_type_weight');
+
+    expect(weightTypes.length).toBe(1);
+    expect(weightTypes[0].id).toBe('meas_type_weight');
+
+    const customType = types.find(t => t.id === 'custom_type_chest');
+    expect(customType).toBeTruthy();
+  });
 });

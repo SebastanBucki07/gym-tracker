@@ -7,7 +7,7 @@ import * as echarts from 'echarts';
 import { EChartsCoreOption } from 'echarts';
 import { AuthService } from '../../core/auth/auth.service';
 import { LocalMeasurementRepository } from '../../data-access/local/local-measurement.repository';
-import { BodyMeasurement, MeasurementType } from '../../data-access/contracts/measurement.model';
+import { BodyMeasurement, MeasurementType, CANONICAL_BODY_WEIGHT_TYPE_ID } from '../../data-access/contracts/measurement.model';
 
 @Component({
   selector: 'app-measurements',
@@ -60,8 +60,9 @@ export class MeasurementsComponent implements OnInit {
       this.measurementTypes.set(types);
       this.measurements.set(allMeasurements);
 
-      if (types.length > 0 && !this.selectedTypeId()) {
-        this.selectedTypeId.set(types[0].id);
+      if (types.length > 0 && (!this.selectedTypeId() || !types.some(t => t.id === this.selectedTypeId()))) {
+        const defaultType = types.find(t => t.id === CANONICAL_BODY_WEIGHT_TYPE_ID) || types[0];
+        this.selectedTypeId.set(defaultType.id);
       }
       this.updateChart();
     } catch (err) {
@@ -88,7 +89,14 @@ export class MeasurementsComponent implements OnInit {
 
   getFilteredMeasurements(): BodyMeasurement[] {
     const typeId = this.selectedTypeId();
-    const list = this.measurements().filter(m => m.measurementTypeId === typeId);
+    const isWeightSelected = typeId === CANONICAL_BODY_WEIGHT_TYPE_ID;
+    const list = this.measurements().filter(m => {
+      if (m.measurementTypeId === typeId) return true;
+      if (isWeightSelected && (m.measurementTypeId.startsWith('type_weight_') || m.measurementTypeId === 'meas_type_weight')) {
+        return true;
+      }
+      return false;
+    });
     return list.sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
   }
 
@@ -149,7 +157,7 @@ export class MeasurementsComponent implements OnInit {
 
   openCreateModal() {
     this.measurementForm.reset({
-      measurementTypeId: this.selectedTypeId() || this.measurementTypes()[0]?.id || '',
+      measurementTypeId: this.selectedTypeId() || CANONICAL_BODY_WEIGHT_TYPE_ID,
       value: 75,
       measuredAt: new Date().toISOString().substring(0, 10),
       notes: ''
