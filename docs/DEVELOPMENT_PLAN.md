@@ -128,13 +128,14 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13A & 13A.1 Schema & Security Hardening Prepared)
+Status: IN PROGRESS (Stage 13A.2 Final SQL Review & Deployment Readiness Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
+- [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
 - [ ] Repository implementations and mappers.
 - [ ] JSON import/migration workflow.
 - [ ] Security and migration tests.
 - [ ] Commit.
 
 ## Current task
-Stage 13A.1 — Supabase schema and security hardening: hardened PostgreSQL schema (`proposed-schema.sql`), trigger-based profile provisioning, strict table check constraints, hardened RLS policies (`proposed-rls.sql`), private Storage RLS policies (`proposed-storage-rls.sql`), and schema review documentation (`SCHEMA_REVIEW.md`).
+Stage 13A.2 — Final SQL review and deployment readiness: robust profile creation trigger with fallback name generation, email protection, 14-table schema inventory, storage RLS policies, deployment order guidance, and deployment readiness documentation (`DEPLOYMENT_READINESS.md`).

@@ -1,4 +1,4 @@
-# Gym Tracker — Supabase Cloud Migration & Architecture Plan (Stage 13A)
+# Gym Tracker — Supabase Cloud Migration & Architecture Plan (Stage 13A.2)
 
 This document presents a comprehensive technical audit and migration architecture plan for introducing cloud synchronization with **Supabase** while strictly preserving Gym Tracker's robust **local-first** architecture (IndexedDB / Dexie).
 
@@ -12,22 +12,8 @@ This document presents a comprehensive technical audit and migration architectur
 
 ---
 
-## 2. Current Dexie Schema Inventory (`GymTrackerDB`)
-The existing application defines the following Dexie stores and indexes:
-- `users`: `id, email, username`
-- `exercises`: `id, primaryMuscleGroupId, equipmentCategoryId, source, userId, isActive`
-- `equipmentCategories`: `id`
-- `muscleGroups`: `id`
-- `workouts`: `id, userId, startedAt, isCompleted`
-- `workoutSets`: `id, workoutId, exerciseId`
-- `workoutPlans`: `id, userId`
-- `measurementTypes`: `id, userId, isSystem`
-- `bodyMeasurements`: `id, userId, measurementTypeId, measuredAt`
-- `cardioTypes`: `id, isSystem`
-- `cardioActivities`: `id, userId, cardioTypeId, performedAt`
-- `dailySteps`: `id, userId, date, [userId+date]`
-- `progressPhotos`: `id, userId, takenAt`
-- `appSettings`: `id, userId`
+## 2. Current Dexie Schema Inventory (`GymTrackerDB` & 14 PostgreSQL Tables)
+The existing application defines 14 Dexie stores and corresponding hardened PostgreSQL tables (`profiles`, `app_settings`, `muscle_groups`, `equipment_categories`, `cardio_types`, `exercises`, `workouts`, `workout_sets`, `workout_plans`, `measurement_types`, `body_measurements`, `cardio_activities`, `daily_steps`, `progress_photos`).
 
 ---
 
