@@ -64,6 +64,24 @@ export class SupabaseAuthService {
     }
   }
 
+  async waitForSession(): Promise<boolean> {
+    if (!this.loadingSignal()) {
+      return this.isAuthenticated();
+    }
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (!this.loadingSignal()) {
+          clearInterval(interval);
+          resolve(this.isAuthenticated());
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(this.isAuthenticated());
+      }, 3000);
+    });
+  }
+
   async signUp(email: string, password: string, username?: string): Promise<{ user: SupabaseUser | null; error: any }> {
     if (!this.supabase) {
       throw new Error('Supabase nie jest skonfigurowany. Użyj lokalnego logowania.');
@@ -73,6 +91,7 @@ export class SupabaseAuthService {
       email,
       password,
       options: {
+        emailRedirectTo: window.location.origin + '/dashboard',
         data: {
           username: username || email.split('@')[0]
         }

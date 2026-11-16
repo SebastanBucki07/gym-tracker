@@ -58,6 +58,14 @@
             <span class="email">{{ user.email }}</span>
           </div>
         </div>
+      } @else if (supabaseAuth.currentUser(); as supaUser) {
+        <div class="user-profile">
+          <div class="user-avatar">{{ (supaUser.user_metadata?.['username'] || supaUser.email || 'U').charAt(0).toUpperCase() }}</div>
+          <div class="user-details">
+            <span class="username">{{ supaUser.user_metadata?.['username'] || supaUser.email }}</span>
+            <span class="email">Supabase Cloud</span>
+          </div>
+        </div>
       }
       <button class="btn logout-btn" (click)="logout()" title="Wyloguj się">
         Wyloguj

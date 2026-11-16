@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { SupabaseAuthService } from '../../core/auth/supabase-auth.service';
 import { ActiveWorkoutService } from '../../features/workouts/active-workout/active-workout.service';
 import { NetworkStatusService } from '../../core/pwa/network-status.service';
 import { PwaInstallService } from '../../core/pwa/pwa-install.service';
@@ -15,6 +16,7 @@ import { PwaInstallService } from '../../core/pwa/pwa-install.service';
 })
 export class MainLayoutComponent implements OnInit {
   authService = inject(AuthService);
+  supabaseAuth = inject(SupabaseAuthService);
   activeWorkoutService = inject(ActiveWorkoutService);
   networkStatus = inject(NetworkStatusService);
   pwaInstall = inject(PwaInstallService);
@@ -40,8 +42,9 @@ export class MainLayoutComponent implements OnInit {
     this.pwaInstall.reloadApp();
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.authService.logout();
+    await this.supabaseAuth.signOut();
     this.router.navigate(['/login']);
   }
 }
