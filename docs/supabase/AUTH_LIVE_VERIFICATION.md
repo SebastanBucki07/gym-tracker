@@ -1,28 +1,31 @@
 # Gym Tracker — Live Supabase Auth Verification (Stage 13B.1)
 
-This document outlines the configuration guide, verification methodology, and manual checklist for connecting Gym Tracker's Supabase Auth implementation to a live Supabase project.
+Ten dokument opisuje procedurę konfiguracji lokalnej oraz instrukcję krok po kroku do przeprowadzenia rzeczywistej weryfikacji Supabase Auth z prawdziwym projektem Supabase.
 
 ---
 
-## 1. Local Configuration Procedure
-To connect the local development environment to your real Supabase project without committing sensitive keys:
-1. Open your Supabase Dashboard (`https://supabase.com/dashboard`).
-2. Navigate to **Project Settings > API**.
-3. Copy your **Project URL** and **Publishable Anon Key** (`anon` / `public`).
-4. Update `src/environments/environment.ts` and `src/environments/environment.development.ts` locally:
+## 1. Bezpieczna konfiguracja lokalna
+Aby połączyć lokalną aplikację z Twoim projektem w Supabase bez ryzyka wycieku kluczy do systemu kontroli wersji:
+1. W plikach `src/environments/environment.ts` oraz `src/environments/environment.development.ts` wpisz swoje dane:
    ```typescript
    export const environment = {
      production: false,
-     supabaseUrl: 'YOUR_REAL_SUPABASE_URL',
-     supabaseKey: 'YOUR_REAL_SUPABASE_ANON_KEY'
+     supabaseUrl: 'https://TWOJ_PROJEKT.supabase.co',
+     supabaseKey: 'TWÓJ_PUBLICZNY_ANON_KEY'
    };
    ```
-   *(Note: Never commit your actual `supabaseUrl` or `supabaseKey` to version control. The repository maintains safe placeholders by default).*
+2. **Ochrona przed commitowaniem (Git)**:
+   Aby Git ignorował lokalne zmiany w pliku z konfiguracją, wykonaj w terminalu:
+   ```bash
+   git update-index --assume-unchanged src/environments/environment.ts
+   git update-index --assume-unchanged src/environments/environment.development.ts
+   ```
+   *(W razie potrzeby przywrócenia śledzenia: `git update-index --no-assume-unchanged src/environments/environment.ts`)*.
 
 ---
 
-## 2. Required Supabase Dashboard URL Settings
-In your Supabase Dashboard (`Authentication > URL Configuration`):
+## 2. Konfiguracja w Dashboardzie Supabase
+W panelu Supabase (`Authentication > URL Configuration`):
 - **Site URL**: `http://localhost:4200`
 - **Redirect URLs**:
   - `http://localhost:4200/`
@@ -31,25 +34,34 @@ In your Supabase Dashboard (`Authentication > URL Configuration`):
 
 ---
 
-## 3. Verified Authentication Lifecycle (Automated & Manual)
+## 3. Instrukcja weryfikacji krok po kroku (Live Verification)
 
-### Automated Unit Tests (Executed)
-- **Client Initialization**: Verified graceful handling of missing or placeholder configuration (`SupabaseAuthService`).
-- **Error Handling**: Verified localized Polish error messages for sign-in and sign-up failures.
-- **Local-First Isolation**: Verified that Supabase Auth does not touch, modify, or delete local Dexie records or local profile states.
+1. **Uruchomienie aplikacji**:
+   ```bash
+   npm start
+   ```
+   Otwórz przeglądarkę pod adresem `http://localhost:4200`.
 
-### Manual Live Verification Checklist (Developer Action Required)
-1. **Sign-Up**: Navigate to `/register`, select **Supabase Cloud Auth**, enter valid credentials, and submit. Verify that a confirmation email is dispatched by Supabase.
-2. **Email Confirmation**: Open your test email inbox and click the confirmation link.
-3. **Sign-In**: Navigate to `/login`, select **Supabase Cloud Auth**, and sign in with the confirmed credentials. Verify successful redirect to `/dashboard` and session persistence.
-4. **Session Restoration**: Refresh the browser page while logged in. Verify that the session is restored automatically without forcing re-login.
-5. **Password Reset**: Use the password reset flow and verify receipt of the recovery email.
-6. **Sign-Out**: Click **Wyloguj** in the global navbar. Verify that the Supabase session is cleared and the user returns to `/login`.
-7. **Local-First Integrity**: Verify that local Dexie workout history, cardio, steps, and local profiles remain 100% intact and accessible before, during, and after cloud authentication operations.
+2. **Rejestracja testowego konta**:
+   - Przejdź do `/register`.
+   - Wybierz zakładkę **Supabase Cloud Auth**.
+   - Podaj nazwę użytkownika, swój prawdziwy testowy e-mail oraz hasło (min. 6 znaków).
+   - Kliknij **Zarejestruj w Supabase**.
 
----
+3. **Potwierdzenie e-maila**:
+   - Otwórz swoją skrzynkę pocztową i kliknij link potwierdzający (zgodnie z konfiguracją providera Email w Supabase).
 
-## 4. Safety & Security Confirmations
-- **No Service Role Keys Used**: Only the public anon key is referenced in frontend code.
-- **No Schema Modifications**: No remote SQL migrations, tables, or storage buckets were created or altered during Stage 13B.1.
-- **No Data Import**: No local Dexie records were automatically uploaded or associated with cloud accounts.
+4. **Logowanie**:
+   - Przejdź do `/login`.
+   - Wybierz zakładkę **Supabase Cloud Auth**.
+   - Wpisz potwierdzony e-mail i hasło, kliknij **Zaloguj przez Supabase**.
+   - Sprawdź poprawność przekierowania do `/dashboard` oraz widoczność nagłówka globalnego z Twoim loginem.
+
+5. **Przywracanie sesji (Session Persistence)**:
+   - Odśwież stronę (F5) — sesja powinna zostać automatycznie przywrócona przez klient Supabase.
+
+6. **Wylogowanie**:
+   - Kliknij przycisk **Wyloguj** w prawym górnym rogu paska nawigacyjnego — sesja zostanie zakończona, a aplikacja przekieruje Cię do ekranu logowania.
+
+7. **Integralność Local-First**:
+   - Sprawdź, że lokalne dane w IndexedDB (treningi, kroki, pomiary) pozostają nienaruszone i dostępne niezależnie od stanu logowania w Supabase Auth.
