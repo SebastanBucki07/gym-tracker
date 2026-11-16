@@ -1,13 +1,8 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
-    <div class="user-info">
-      @if (authService.currentUser(); as user) {
-        <div class="avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
-        <div>
-          <h2>Witaj, {{ user.username }}!</h2>
-          <p class="email">{{ user.email }}</p>
-        </div>
-      }
+    <div class="header-title">
+      <h2>Przegląd aktywności</h2>
+      <p class="subtitle">Statystyki treningowe i podsumowanie formy</p>
     </div>
     <div class="header-actions">
       <select [value]="selectedPreset()" (change)="onPresetChange($event)" class="range-select">
@@ -16,12 +11,19 @@
         <option value="current-month">Bieżący miesiąc</option>
         <option value="all">Cały okres</option>
       </select>
-      <button class="btn logout" (click)="logout()">Wyloguj się</button>
     </div>
   </header>
 
   <div class="quick-nav-bar">
-    <a routerLink="/workouts/active" class="btn primary">💪 Nowy trening</a>
+    @if (hasActiveWorkout()) {
+      <a routerLink="/workouts/active" class="btn primary in-progress">
+        🔥 Kontynuuj trening
+      </a>
+    } @else {
+      <a routerLink="/workouts/active" class="btn primary">
+        💪 Nowy trening
+      </a>
+    }
     <a routerLink="/workouts/history" class="btn secondary">📜 Historia</a>
     <a routerLink="/cardio" class="btn secondary">🏃 Cardio</a>
     <a routerLink="/steps" class="btn secondary">👟 Kroki</a>

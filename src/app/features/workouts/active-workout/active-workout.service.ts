@@ -476,6 +476,14 @@ export class ActiveWorkoutService {
     return false;
   }
 
+  hasActiveWorkout(userId?: string): boolean {
+    if (this.isActive()) return true;
+    if (userId) {
+      return this.loadFromStorage(userId);
+    }
+    return false;
+  }
+
   clearStorage(userId?: string): void {
     const workout = this.activeWorkout();
 

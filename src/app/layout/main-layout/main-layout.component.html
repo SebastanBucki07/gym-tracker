@@ -1,0 +1,71 @@
+<div class="layout-wrapper">
+  <header class="global-navbar">
+    <div class="navbar-brand">
+      <a routerLink="/dashboard" class="brand-link">
+        <span class="brand-icon">🏋️</span>
+        <span class="brand-title">Gym Tracker</span>
+      </a>
+    </div>
+
+    <div class="navbar-center">
+      @if (hasActiveWorkout()) {
+        <a routerLink="/workouts/active" class="btn workout-btn in-progress">
+          <span class="pulse-indicator"></span>
+          🔥 Kontynuuj trening
+        </a>
+      } @else {
+        <a routerLink="/workouts/active" class="btn workout-btn">
+          💪 Nowy trening
+        </a>
+      }
+    </div>
+
+    <div class="navbar-user">
+      @if (authService.currentUser(); as user) {
+        <div class="user-profile">
+          <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+          <div class="user-details">
+            <span class="username">{{ user.username }}</span>
+            <span class="email">{{ user.email }}</span>
+          </div>
+        </div>
+      }
+      <button class="btn logout-btn" (click)="logout()" title="Wyloguj się">
+        Wyloguj
+      </button>
+    </div>
+  </header>
+
+  <nav class="global-subnav">
+    <div class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        🏠 Panel
+      </a>
+      <a routerLink="/workouts/history" routerLinkActive="active">
+        📜 Historia
+      </a>
+      <a routerLink="/cardio" routerLinkActive="active">
+        🏃 Cardio
+      </a>
+      <a routerLink="/steps" routerLinkActive="active">
+        👟 Kroki
+      </a>
+      <a routerLink="/measurements" routerLinkActive="active">
+        📏 Pomiary
+      </a>
+      <a routerLink="/calendar" routerLinkActive="active">
+        📅 Kalendarz
+      </a>
+      <a routerLink="/progress-photos" routerLinkActive="active">
+        📸 Zdjęcia
+      </a>
+      <a routerLink="/exercises" routerLinkActive="active">
+        📋 Katalog
+      </a>
+    </div>
+  </nav>
+
+  <main class="page-container">
+    <router-outlet></router-outlet>
+  </main>
+</div>

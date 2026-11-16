@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { ActiveWorkoutService } from '../workouts/active-workout/active-workout.service';
 import { DashboardQueryService, DashboardSummary, DateRangePreset, MuscleActivityStats } from './dashboard.service';
 import { MuscleVisualizationComponent } from './muscle-visualization.component';
 
@@ -14,6 +15,7 @@ import { MuscleVisualizationComponent } from './muscle-visualization.component';
 })
 export class DashboardComponent implements OnInit {
   authService = inject(AuthService);
+  activeWorkoutService = inject(ActiveWorkoutService);
   private dashboardQuery = inject(DashboardQueryService);
   private router = inject(Router);
 
@@ -21,6 +23,11 @@ export class DashboardComponent implements OnInit {
   summary = signal<DashboardSummary | null>(null);
   loading = signal<boolean>(true);
   selectedMuscle = signal<MuscleActivityStats | null>(null);
+
+  hasActiveWorkout(): boolean {
+    const user = this.authService.currentUser();
+    return this.activeWorkoutService.hasActiveWorkout(user?.id);
+  }
 
   async ngOnInit() {
     await this.loadDashboard();
