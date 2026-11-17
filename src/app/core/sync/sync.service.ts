@@ -125,7 +125,7 @@ export class SyncService {
     await this.refreshCounts(currentUserId);
 
     if (onlineChanged && isOnline && this.config.autoSyncOnOnline) {
-      this.processQueue().catch(() => {});
+      await this.processQueue().catch(() => {});
     }
   }
 

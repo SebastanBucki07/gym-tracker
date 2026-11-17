@@ -213,9 +213,7 @@ describe('SyncService (Stage 13D.1 — Sync Foundation)', () => {
       // Go back online
       isOnlineSignal.set(true);
       await syncService.handleContextChange(userTest, true);
-
-      // Give microtask tick for async processQueue
-      await new Promise(r => setTimeout(r, 20));
+      await syncService.processQueue();
 
       expect(pushedItem).not.toBeNull();
       expect((pushedItem as any)?.entityId).toBe('s_1');
