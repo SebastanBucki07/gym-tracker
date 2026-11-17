@@ -299,9 +299,17 @@ export class SyncService {
         try {
           const metaId = `${userId}_${entityType}`;
           const metadata = await db.syncMetadata.get(metaId);
-          const since = metadata?.lastPulledAt ? new Date(metadata.lastPulledAt) : null;
+          // Apply 5-second overlap buffer to prevent missing records at boundary with identical timestamps
+          const since = metadata?.lastPulledAt ? new Date(new Date(metadata.lastPulledAt).getTime() - 5000) : null;
 
           const remoteRecords = await handler.pull(userId, since);
+
+          // Verify active user session hasn't changed during async network call
+          const currentActiveId = this.supabaseAuth.currentUser()?.id;
+          if (!currentActiveId || currentActiveId !== userId) {
+            break;
+          }
+
           if (remoteRecords && remoteRecords.length > 0) {
             for (const remoteRecord of remoteRecords) {
               const entityId = remoteRecord.id;

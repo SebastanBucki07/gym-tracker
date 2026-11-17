@@ -146,11 +146,13 @@ Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
 - [x] Supabase database repository implementations and mappers (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`, mappers, Stage 13D.2).
 - [x] Safe local-to-cloud initial import workflow and wizard UI (`InitialDataImportService`, `InitialImportWizardComponent`, tests, Stage 13D.3).
 - [x] Bidirectional sync handlers and conflict resolution (`SyncService.sync()`, delta pull checkpoints, conflict protection for unsynced local changes, account isolation, serialization lock, 102 passing unit tests, Stage 13D.4).
+- [x] End-to-End Verification of Bidirectional Synchronization (Stage 13D.5 comprehensive audit across checkpoints, logout/account switching race conditions, tombstones, multi-device, user isolation, fault tolerance, conflict policy, and initial import upsert protection with 5s overlap buffer and mid-sync session validation guard).
 - [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 13D.4 — Bidirectional Synchronization: implemented full automatic bidirectional synchronization engine in `SyncService` combining Push (outbox queue processing) and Pull (incremental delta fetch based on `updated_at` and `syncMetadata` pull checkpoints). Implemented conflict detection protecting local unsynced changes from silent remote overwrites, automatic trigger serialization (`syncLock`), account switching/logout safety, retry with backoff, and preservation of local data. Verified with 102 passing unit tests (`npx ng test --watch=false`) and successful production build.
+Stage 13D.5 — E2E Verification of Bidirectional Synchronization: performed exhaustive architectural and security audit across checkpoints (added 5s overlap buffer to prevent missing identical timestamps), logout/account switching race conditions (added mid-sync session validation guard), tombstones, multi-device, user isolation, fault tolerance, conflict policy, and initial import upsert protection. Verified with 102 passing unit tests (`npx ng test --watch=false`) and successful production build.
+
 
 
 
