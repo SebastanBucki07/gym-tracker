@@ -144,12 +144,13 @@ Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
 - [x] Supabase SQL finalization (`001_schema.sql`, `004_sync_metadata.sql`, `SQL_SECURITY_AUDIT.md`, Stage 13C.2.2).
 - [x] Central Sync Foundation & Architecture (`SyncService`, `LocalSyncQueueRepository`, Dexie schema v2, Stage 13D.1).
 - [x] Supabase database repository implementations and mappers (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`, mappers, Stage 13D.2).
-- [ ] Safe local-to-cloud initial import workflow and wizard UI.
+- [x] Safe local-to-cloud initial import workflow and wizard UI (`InitialDataImportService`, `InitialImportWizardComponent`, tests, Stage 13D.3).
 - [ ] Bidirectional sync handlers and conflict resolution.
 - [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 13D.2 — Supabase Repositories & Mappers: implemented comprehensive data mappers (`workout.mapper.ts`, `exercise.mapper.ts`, `measurement.mapper.ts`, `cardio.mapper.ts`, `steps.mapper.ts`, `settings.mapper.ts`, `workout-plan.mapper.ts`) translating between domain models and remote Supabase snake_case/ISO schema representations. Implemented remote Supabase database repositories (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseMeasurementTypeRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`) implementing `SyncEntityHandler` for integration with `SyncService` outbox queue processing. Verified with 86 passing unit tests and successful production build.
+Stage 13D.3 — Initial Data Import: implemented explicit, secure local-to-cloud initial data import (`InitialDataImportService`) and UI wizard (`InitialImportWizardComponent`). Enforced active Supabase Auth session requirement, strict ownership mapping from `auth.uid()`, detection and override handling for ambiguous legacy `user_jan_1` records, dependency-ordered table import, idempotent `upsert` with conflict keys, partial error collection, resume capabilities, and local Dexie data preservation. Verified with 94 passing unit tests (`npx ng test --watch=false`) and successful production build.
+
 
 

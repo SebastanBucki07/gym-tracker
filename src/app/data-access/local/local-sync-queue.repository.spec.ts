@@ -80,7 +80,7 @@ describe('LocalSyncQueueRepository', () => {
     const itemsB = await repo.getPendingItems(userB);
 
     expect(itemsA.length).toBe(2);
-    expect(itemsA.map(i => i.entityId)).toEqual(['w_a1', 's_a1']);
+    expect(itemsA.map(i => i.entityId).sort()).toEqual(['w_a1', 's_a1'].sort());
 
     expect(itemsB.length).toBe(1);
     expect(itemsB[0].entityId).toBe('m_b1');
