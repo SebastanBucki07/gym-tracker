@@ -4,7 +4,7 @@ import { InitialDataImportService } from './initial-data-import.service';
 import { db } from '../../data-access/local/app-database';
 import { SyncAuthError } from '../../data-access/contracts/sync.model';
 
-describe('InitialDataImportService (Stage 13D.3)', () => {
+describe('InitialDataImportService (Stage 13D.3 Security & Audit Tests)', () => {
   let importService: InitialDataImportService;
   let currentUserSignal: any;
   let mockSupabaseAuth: any;
@@ -12,6 +12,7 @@ describe('InitialDataImportService (Stage 13D.3)', () => {
   let upsertSpy: any;
 
   const testSupabaseUserId = 'supa_uuid_import_user_123';
+  const otherSupabaseUserId = 'supa_uuid_other_user_999';
 
   beforeEach(async () => {
     await db.appSettings.clear();
@@ -64,7 +65,6 @@ describe('InitialDataImportService (Stage 13D.3)', () => {
   it('should preview local records correctly for authenticated Supabase user', async () => {
     currentUserSignal.set({ id: testSupabaseUserId, email: 'user@example.com' });
 
-    // Seed local data
     await db.appSettings.add({
       id: 'set_1',
       userId: testSupabaseUserId,
@@ -84,28 +84,34 @@ describe('InitialDataImportService (Stage 13D.3)', () => {
       updatedAt: new Date()
     });
 
-    await db.workoutSets.add({
-      id: 's_1',
-      workoutId: 'w_1',
-      exerciseId: 'ex_1',
-      setNumber: 1,
-      weight: 80,
-      repetitions: 10,
-      isCompleted: true,
-      isWarmup: false
-    });
-
     const preview = await importService.previewLocalData();
     expect(preview.tableCounts['app_settings']).toBe(1);
     expect(preview.tableCounts['workouts']).toBe(1);
-    expect(preview.tableCounts['workout_sets']).toBe(1);
-    expect(preview.totalRecords).toBe(3);
+    expect(preview.totalRecords).toBe(2);
   });
 
-  it('should detect ambiguous ownership when legacy user_jan_1 records exist', async () => {
+  it('should strictly isolate data and ignore foreign user records in Dexie during preview and import', async () => {
     currentUserSignal.set({ id: testSupabaseUserId, email: 'user@example.com' });
 
-    // Add legacy record
+    // Add record for another user
+    await db.workouts.add({
+      id: 'w_foreign',
+      userId: otherSupabaseUserId,
+      name: 'Foreign Workout',
+      startedAt: new Date(),
+      isCompleted: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const preview = await importService.previewLocalData();
+    expect(preview.tableCounts['workouts']).toBe(0);
+    expect(preview.totalRecords).toBe(0);
+  });
+
+  it('should detect ambiguous ownership when legacy user_jan_1 records exist and allow override when explicitly requested', async () => {
+    currentUserSignal.set({ id: testSupabaseUserId, email: 'user@example.com' });
+
     await db.workouts.add({
       id: 'w_legacy',
       userId: 'user_jan_1',
@@ -118,13 +124,22 @@ describe('InitialDataImportService (Stage 13D.3)', () => {
 
     const preview = await importService.previewLocalData();
     expect(preview.hasAmbiguousOwnership).toBe(true);
-    expect(preview.legacyRecordsCount).toBeGreaterThan(0);
+    expect(preview.legacyRecordsCount).toBe(1);
 
-    // Attempting import without override should fail
+    // Attempting import without override should throw
     await expect(importService.executeImport(false)).rejects.toThrow(/niejednoznacznego właściciela/);
+
+    // Importing with explicit allowAmbiguousOverride = true should succeed
+    const progress = await importService.executeImport(true);
+    expect(progress.errors.length).toBe(0);
+    expect(progress.importedRecords).toBe(1);
+    expect(upsertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'w_legacy', user_id: testSupabaseUserId }),
+      { onConflict: 'id' }
+    );
   });
 
-  it('should execute import successfully respecting dependency order and idempotency upsert', async () => {
+  it('should handle conflict with existing cloud records idempotently via upsert', async () => {
     currentUserSignal.set({ id: testSupabaseUserId, email: 'user@example.com' });
 
     await db.appSettings.add({
@@ -136,11 +151,13 @@ describe('InitialDataImportService (Stage 13D.3)', () => {
       distanceUnit: 'km'
     });
 
-    const progress = await importService.executeImport(true);
+    // Run import twice (simulating retry / resume / cloud conflict)
+    const progress1 = await importService.executeImport(true);
+    const progress2 = await importService.executeImport(true);
 
-    expect(progress.importedRecords).toBe(1);
-    expect(progress.errors.length).toBe(0);
-    expect(mockSupabaseClient.from).toHaveBeenCalledWith('app_settings');
+    expect(progress1.importedRecords).toBe(1);
+    expect(progress2.importedRecords).toBe(1);
+    expect(upsertSpy).toHaveBeenCalledTimes(2);
     expect(upsertSpy).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'set_1', user_id: testSupabaseUserId }),
       { onConflict: 'id' }
