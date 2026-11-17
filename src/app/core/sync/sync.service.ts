@@ -286,10 +286,13 @@ export class SyncService {
     try {
       // 1. PUSH: Outbox queue processing
       const pendingItems = await this.queueRepository.getPendingItems(userId, this.config.batchSize);
+      console.log('Sync processing for userId:', userId, 'pendingItems count:', pendingItems.length, pendingItems);
 
       for (const item of pendingItems) {
         // Verify user ownership strictly
-        if (item.userId !== userId) {
+        const normalizedItemUserId = item.userId.startsWith('supa_') ? item.userId : `supa_${item.userId}`;
+        const normalizedActiveUserId = userId.startsWith('supa_') ? userId : `supa_${userId}`;
+        if (normalizedItemUserId !== normalizedActiveUserId) {
           result.errors.push({ itemId: item.id, error: 'Security violation: item user_id does not match active session.' });
           continue;
         }
@@ -305,6 +308,7 @@ export class SyncService {
 
         try {
           await handler.push(item);
+          console.log('Successfully pushed item to Supabase:', item.id);
           await this.queueRepository.updateStatus(item.id, 'synced');
           result.successCount++;
         } catch (pushErr: any) {

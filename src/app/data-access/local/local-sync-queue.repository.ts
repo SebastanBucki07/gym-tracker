@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { AppDatabase, db } from './app-database';
 import {
   EnqueueSyncItemParams,
@@ -35,7 +35,7 @@ export function createSyncQueueItem<T = any>(item: EnqueueSyncItemParams<T>): Sy
 export class LocalSyncQueueRepository implements SyncQueueRepository {
   private database: AppDatabase;
 
-  constructor(customDb?: AppDatabase) {
+  constructor(@Optional() customDb?: AppDatabase) {
     this.database = customDb || db;
   }
 

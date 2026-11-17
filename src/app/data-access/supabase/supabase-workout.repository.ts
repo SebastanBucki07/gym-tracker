@@ -25,15 +25,23 @@ export class SupabaseWorkoutRepository implements SyncEntityHandler {
     if (operation === 'create' || operation === 'update') {
       const workoutObj = payload.workout || payload;
       const workoutData = toSupabaseWorkout(workoutObj);
+      console.log('SupabaseWorkoutRepository pushing workoutData:', workoutData);
       const { error: wError } = await client.from('workouts').upsert(workoutData);
-      if (wError) throw new Error(wError.message);
+      if (wError) {
+        console.error('Supabase workout upsert error:', wError);
+        throw new Error(wError.message);
+      }
+      console.log('Supabase workout upsert success');
 
       const setsArr = payload.sets;
       if (setsArr && Array.isArray(setsArr)) {
         for (const set of setsArr) {
           const setData = toSupabaseWorkoutSet(set);
           const { error: sError } = await client.from('workout_sets').upsert(setData);
-          if (sError) throw new Error(sError.message);
+          if (sError) {
+            console.error('Supabase workout set upsert error:', sError);
+            throw new Error(sError.message);
+          }
         }
       }
     } else if (operation === 'delete') {
