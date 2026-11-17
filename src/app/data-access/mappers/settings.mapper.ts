@@ -3,7 +3,7 @@ import { AppSettings } from '../contracts/settings.model';
 export function toSupabaseAppSettings(settings: AppSettings): any {
   return {
     id: settings.id,
-    user_id: settings.userId,
+    user_id: settings.userId ? (settings.userId.startsWith('supa_') ? settings.userId.replace('supa_', '') : settings.userId) : null,
     theme: settings.theme,
     weight_unit: settings.weightUnit,
     measurement_unit: settings.measurementUnit,
@@ -15,7 +15,7 @@ export function toSupabaseAppSettings(settings: AppSettings): any {
 export function fromSupabaseAppSettings(row: any): AppSettings {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ? `supa_${row.user_id}` : row.user_id,
     theme: row.theme,
     weightUnit: row.weight_unit,
     measurementUnit: row.measurement_unit,

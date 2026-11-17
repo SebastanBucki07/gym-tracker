@@ -1,24 +1,7 @@
 <div class="auth-container">
   <div class="auth-card">
     <h1>Gym Tracker</h1>
-    <h2>Logowanie</h2>
-
-    <div class="auth-mode-tabs">
-      <button 
-        type="button" 
-        class="tab-btn" 
-        [class.active]="authMode() === 'local'" 
-        (click)="setMode('local')">
-        Profil lokalny
-      </button>
-      <button 
-        type="button" 
-        class="tab-btn" 
-        [class.active]="authMode() === 'supabase'" 
-        (click)="setMode('supabase')">
-        Supabase Cloud Auth
-      </button>
-    </div>
+    <h2>Logowanie (Supabase Cloud)</h2>
     
     @if (errorMessage()) {
       <div class="alert error">{{ errorMessage() }}</div>
@@ -30,35 +13,18 @@
         <input id="email" type="email" formControlName="email" placeholder="Wprowadź e-mail" />
       </div>
 
-      @if (authMode() === 'supabase') {
-        <div class="form-group">
-          <label for="password">Hasło (Supabase)</label>
-          <input id="password" type="password" formControlName="password" placeholder="Wprowadź hasło" />
-        </div>
-      }
+      <div class="form-group">
+        <label for="password">Hasło</label>
+        <input id="password" type="password" formControlName="password" placeholder="Wprowadź hasło" />
+      </div>
 
       <button type="submit" class="btn primary" [disabled]="loginForm.invalid || loading()">
-        {{ loading() ? 'Logowanie...' : (authMode() === 'supabase' ? 'Zaloguj przez Supabase' : 'Zaloguj lokalnie') }}
+        {{ loading() ? 'Logowanie...' : 'Zaloguj przez Supabase' }}
       </button>
     </form>
 
     <div class="auth-links">
       <p>Nie masz konta? <a routerLink="/register">Zarejestruj się</a></p>
     </div>
-
-    @if (authMode() === 'local' && users().length > 0) {
-      <div class="quick-users">
-        <h3>Szybkie logowanie (lokalni użytkownicy):</h3>
-        <ul>
-          @for (u of users(); track u.id) {
-            <li>
-              <button type="button" class="btn-link" (click)="quickLogin(u.email)">
-                {{ u.username }} ({{ u.email }})
-              </button>
-            </li>
-          }
-        </ul>
-      </div>
-    }
   </div>
 </div>

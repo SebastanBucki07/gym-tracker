@@ -1,6 +1,7 @@
 import { MeasurementRepository } from '../contracts/repository.contracts';
 import { BodyMeasurement, MeasurementType, CANONICAL_BODY_WEIGHT_TYPE_ID } from '../contracts/measurement.model';
 import { db } from './app-database';
+import { createSyncQueueItem } from './local-sync-queue.repository';
 
 export class LocalMeasurementRepository implements MeasurementRepository {
   async getTypes(userId?: string): Promise<MeasurementType[]> {
@@ -11,7 +12,6 @@ export class LocalMeasurementRepository implements MeasurementRepository {
     const seen = new Set<string>();
     const deduplicated: MeasurementType[] = [];
 
-    // Prioritize canonical system types first
     const sorted = all.sort((a, b) => {
       if (a.id === CANONICAL_BODY_WEIGHT_TYPE_ID) return -1;
       if (b.id === CANONICAL_BODY_WEIGHT_TYPE_ID) return 1;
@@ -33,7 +33,29 @@ export class LocalMeasurementRepository implements MeasurementRepository {
   }
 
   async createMeasurementType(type: MeasurementType): Promise<string> {
-    await db.measurementTypes.add(type);
+    const queueItem = !type.isSystem && type.userId ? createSyncQueueItem({
+      userId: type.userId,
+      entityType: 'measurementType',
+      entityId: type.id,
+      operation: 'create',
+      payload: type
+    }) : null;
+
+    await db.transaction('rw', db.measurementTypes, db.syncQueue, async () => {
+      const existing = await db.measurementTypes.get(type.id);
+      if (existing) {
+        await db.measurementTypes.update(type.id, type as any);
+      } else {
+        await db.measurementTypes.add(type);
+      }
+      if (queueItem) {
+        await db.syncQueue.put(queueItem);
+      }
+    });
+
+    if (queueItem && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sync-requested'));
+    }
     return type.id;
   }
 
@@ -42,15 +64,81 @@ export class LocalMeasurementRepository implements MeasurementRepository {
   }
 
   async createMeasurement(measurement: BodyMeasurement): Promise<string> {
-    await db.bodyMeasurements.add(measurement);
+    const queueItem = createSyncQueueItem({
+      userId: measurement.userId,
+      entityType: 'measurement',
+      entityId: measurement.id,
+      operation: 'create',
+      payload: measurement
+    });
+
+    await db.transaction('rw', db.bodyMeasurements, db.syncQueue, async () => {
+      const existing = await db.bodyMeasurements.get(measurement.id);
+      if (existing) {
+        await db.bodyMeasurements.update(measurement.id, measurement as any);
+      } else {
+        await db.bodyMeasurements.add(measurement);
+      }
+      if (queueItem) {
+        await db.syncQueue.put(queueItem);
+      }
+    });
+
+    if (queueItem && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sync-requested'));
+    }
     return measurement.id;
   }
 
   async updateMeasurement(id: string, changes: Partial<BodyMeasurement>): Promise<void> {
-    await db.bodyMeasurements.update(id, changes);
+    let hasQueueItem = false;
+
+    await db.transaction('rw', db.bodyMeasurements, db.syncQueue, async () => {
+      const existing = await db.bodyMeasurements.get(id);
+      if (!existing) return;
+      const updated = { ...existing, ...changes };
+      const queueItem = createSyncQueueItem({
+        userId: updated.userId,
+        entityType: 'measurement',
+        entityId: id,
+        operation: 'update',
+        payload: updated
+      });
+
+      await db.bodyMeasurements.update(id, updated);
+      if (queueItem) {
+        await db.syncQueue.put(queueItem);
+        hasQueueItem = true;
+      }
+    });
+
+    if (hasQueueItem && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sync-requested'));
+    }
   }
 
   async deleteMeasurement(id: string): Promise<void> {
-    await db.bodyMeasurements.delete(id);
+    let hasQueueItem = false;
+
+    await db.transaction('rw', db.bodyMeasurements, db.syncQueue, async () => {
+      const existing = await db.bodyMeasurements.get(id);
+      if (!existing) return;
+      const queueItem = createSyncQueueItem({
+        userId: existing.userId,
+        entityType: 'measurement',
+        entityId: id,
+        operation: 'delete'
+      });
+
+      await db.bodyMeasurements.delete(id);
+      if (queueItem) {
+        await db.syncQueue.put(queueItem);
+        hasQueueItem = true;
+      }
+    });
+
+    if (hasQueueItem && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sync-requested'));
+    }
   }
 }

@@ -3,7 +3,7 @@ import { BodyMeasurement, MeasurementType } from '../contracts/measurement.model
 export function toSupabaseMeasurementType(type: MeasurementType): any {
   return {
     id: type.id,
-    user_id: type.userId ?? null,
+    user_id: type.userId ? (type.userId.startsWith('supa_') ? type.userId.replace('supa_', '') : type.userId) : null,
     name: type.name,
     unit: type.unit,
     is_system: type.isSystem
@@ -13,7 +13,7 @@ export function toSupabaseMeasurementType(type: MeasurementType): any {
 export function fromSupabaseMeasurementType(row: any): MeasurementType {
   return {
     id: row.id,
-    userId: row.user_id ?? undefined,
+    userId: row.user_id ? `supa_${row.user_id}` : undefined,
     name: row.name,
     unit: row.unit,
     isSystem: row.is_system
@@ -23,7 +23,7 @@ export function fromSupabaseMeasurementType(row: any): MeasurementType {
 export function toSupabaseBodyMeasurement(m: BodyMeasurement): any {
   return {
     id: m.id,
-    user_id: m.userId,
+    user_id: m.userId ? (m.userId.startsWith('supa_') ? m.userId.replace('supa_', '') : m.userId) : null,
     measurement_type_id: m.measurementTypeId,
     value: m.value,
     measured_at: m.measuredAt instanceof Date ? m.measuredAt.toISOString() : m.measuredAt,
@@ -34,7 +34,7 @@ export function toSupabaseBodyMeasurement(m: BodyMeasurement): any {
 export function fromSupabaseBodyMeasurement(row: any): BodyMeasurement {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ? `supa_${row.user_id}` : row.user_id,
     measurementTypeId: row.measurement_type_id,
     value: row.value,
     measuredAt: new Date(row.measured_at),

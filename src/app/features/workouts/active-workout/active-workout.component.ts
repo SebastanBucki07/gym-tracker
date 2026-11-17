@@ -210,7 +210,8 @@ export class ActiveWorkoutComponent implements OnInit {
       this.showSummaryModal.set(true);
     }
   } catch (error) {
-    console.error('Błąd podczas zapisywania treningu:', error);
+    console.error('BŁĄD ZAPISU:', error);
+console.error('STACK:', error instanceof Error ? error.stack : error);
 
     alert(
       'Nie udało się zapisać treningu. ' +

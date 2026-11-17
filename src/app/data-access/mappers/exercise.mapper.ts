@@ -3,7 +3,7 @@ import { Exercise } from '../contracts/exercise.model';
 export function toSupabaseExercise(exercise: Exercise): any {
   return {
     id: exercise.id,
-    user_id: exercise.userId ?? null,
+    user_id: exercise.userId ? (exercise.userId.startsWith('supa_') ? exercise.userId.replace('supa_', '') : exercise.userId) : null,
     name: exercise.name,
     description: exercise.description ?? null,
     primary_muscle_group_id: exercise.primaryMuscleGroupId,
@@ -18,7 +18,7 @@ export function toSupabaseExercise(exercise: Exercise): any {
 export function fromSupabaseExercise(row: any): Exercise {
   return {
     id: row.id,
-    userId: row.user_id ?? undefined,
+    userId: row.user_id ? `supa_${row.user_id}` : undefined,
     name: row.name,
     description: row.description ?? undefined,
     primaryMuscleGroupId: row.primary_muscle_group_id,

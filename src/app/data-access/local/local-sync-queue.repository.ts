@@ -8,6 +8,27 @@ import {
   SyncAuthError
 } from '../contracts/sync.model';
 
+export function createSyncQueueItem<T = any>(item: EnqueueSyncItemParams<T>): SyncQueueItem<T> | null {
+  if (!item.userId || item.userId === 'user_jan_1' || item.userId.trim() === '') {
+    return null;
+  }
+
+  const normalizedUserId = item.userId.startsWith('supa_') ? item.userId : `supa_${item.userId}`;
+  const now = new Date();
+  const id = `sq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+  return {
+    ...item,
+    userId: normalizedUserId,
+    id,
+    status: 'pending',
+    retryCount: 0,
+    maxRetries: item.maxRetries ?? 3,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -18,25 +39,18 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
     this.database = customDb || db;
   }
 
+  private normalizeUserId(userId: string): string {
+    if (!userId) return userId;
+    return userId.startsWith('supa_') ? userId : `supa_${userId}`;
+  }
+
   async enqueue<T = any>(item: EnqueueSyncItemParams<T>): Promise<SyncQueueItem<T>> {
-    if (!item.userId || item.userId === 'user_jan_1' || item.userId.trim() === '') {
+    const queueItem = createSyncQueueItem(item);
+    if (!queueItem) {
       throw new SyncAuthError(
         'Nie można zakolejkować operacji synchronizacji dla nieprawidłowego lub legacy użytkownika.'
       );
     }
-
-    const now = new Date();
-    const id = `sq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    const queueItem: SyncQueueItem<T> = {
-      ...item,
-      id,
-      status: 'pending',
-      retryCount: 0,
-      maxRetries: item.maxRetries ?? 3,
-      createdAt: now,
-      updatedAt: now
-    };
 
     await this.database.syncQueue.put(queueItem);
     return queueItem;
@@ -47,9 +61,10 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
       return [];
     }
 
+    const nUserId = this.normalizeUserId(userId);
     const items = await this.database.syncQueue
       .where('[userId+status]')
-      .equals([userId, 'pending'])
+      .equals([nUserId, 'pending'])
       .toArray();
 
     items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -65,9 +80,10 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
       return [];
     }
 
+    const nUserId = this.normalizeUserId(userId);
     const items = await this.database.syncQueue
       .where('[userId+status]')
-      .equals([userId, 'failed'])
+      .equals([nUserId, 'failed'])
       .toArray();
 
     items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -79,9 +95,10 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
       return [];
     }
 
+    const nUserId = this.normalizeUserId(userId);
     const items = await this.database.syncQueue
       .where('userId')
-      .equals(userId)
+      .equals(nUserId)
       .toArray();
 
     items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -155,16 +172,18 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
     if (!userId) {
       return;
     }
-    await this.database.syncQueue.where('userId').equals(userId).delete();
+    const nUserId = this.normalizeUserId(userId);
+    await this.database.syncQueue.where('userId').equals(nUserId).delete();
   }
 
   async getPendingCount(userId: string): Promise<number> {
     if (!userId || userId === 'user_jan_1') {
       return 0;
     }
+    const nUserId = this.normalizeUserId(userId);
     return await this.database.syncQueue
       .where('[userId+status]')
-      .equals([userId, 'pending'])
+      .equals([nUserId, 'pending'])
       .count();
   }
 
@@ -172,9 +191,10 @@ export class LocalSyncQueueRepository implements SyncQueueRepository {
     if (!userId || userId === 'user_jan_1') {
       return 0;
     }
+    const nUserId = this.normalizeUserId(userId);
     return await this.database.syncQueue
       .where('[userId+status]')
-      .equals([userId, 'failed'])
+      .equals([nUserId, 'failed'])
       .count();
   }
 }

@@ -4,6 +4,7 @@ import { LocalUserRepository } from '../../data-access/local/local-user.reposito
 import { LocalSettingsRepository } from '../../data-access/local/local-settings.repository';
 import { DatabaseSeedService } from '../database/database-seed.service';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { SyncService } from '../sync/sync.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,18 +15,42 @@ export class AuthService {
   private seedService = new DatabaseSeedService();
 
   private currentUserSignal = signal<User | null>(null);
+  private isInitializedSignal = signal<boolean>(false);
 
   currentUser = this.currentUserSignal.asReadonly();
   isAuthenticated = computed(() => !!this.currentUserSignal() || (this.supabaseAuth?.isAuthenticated() ?? false));
+  isInitialized = this.isInitializedSignal.asReadonly();
 
-  constructor(private supabaseAuth?: SupabaseAuthService) {
+  constructor(
+    private supabaseAuth?: SupabaseAuthService,
+    private syncService?: SyncService
+  ) {
     this.initAuth();
   }
 
   private async initAuth() {
     await this.seedService.seedDatabase();
     await this.seedInitialUsersIfNeeded();
-    this.restoreSession();
+    await this.restoreSession();
+    this.isInitializedSignal.set(true);
+  }
+
+  async waitForSession(): Promise<boolean> {
+    if (this.isInitializedSignal()) {
+      return this.isAuthenticated();
+    }
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (this.isInitializedSignal()) {
+          clearInterval(interval);
+          resolve(this.isAuthenticated());
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(this.isAuthenticated());
+      }, 3000);
+    });
   }
 
   private async seedInitialUsersIfNeeded() {
@@ -74,15 +99,14 @@ export class AuthService {
     }
   }
 
-  private restoreSession() {
+  private async restoreSession(): Promise<void> {
     const savedUserId = localStorage.getItem('gym_tracker_current_user_id');
     if (savedUserId) {
-      this.userRepository.getById(savedUserId).then(async user => {
-        if (user) {
-          this.currentUserSignal.set(user);
-          await this.seedService.seedSampleUserDataForUser(user.id);
-        }
-      });
+      const user = await this.userRepository.getById(savedUserId);
+      if (user) {
+        this.currentUserSignal.set(user);
+        await this.seedService.seedSampleUserDataForUser(user.id);
+      }
     }
   }
 

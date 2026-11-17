@@ -30,6 +30,14 @@ import { fromSupabaseCardioActivity } from '../../data-access/mappers/cardio.map
 import { fromSupabaseDailySteps } from '../../data-access/mappers/steps.mapper';
 import { fromSupabaseAppSettings } from '../../data-access/mappers/settings.mapper';
 import { fromSupabaseWorkoutPlan } from '../../data-access/mappers/workout-plan.mapper';
+import { SupabaseWorkoutRepository } from '../../data-access/supabase/supabase-workout.repository';
+import { SupabaseCardioRepository } from '../../data-access/supabase/supabase-cardio.repository';
+import { SupabaseExerciseRepository } from '../../data-access/supabase/supabase-exercise.repository';
+import { SupabaseMeasurementRepository } from '../../data-access/supabase/supabase-measurement.repository';
+import { SupabaseMeasurementTypeRepository } from '../../data-access/supabase/supabase-measurement-type.repository';
+import { SupabaseDailyStepsRepository } from '../../data-access/supabase/supabase-daily-steps.repository';
+import { SupabaseWorkoutPlanRepository } from '../../data-access/supabase/supabase-workout-plan.repository';
+import { SupabaseSettingsRepository } from '../../data-access/supabase/supabase-settings.repository';
 
 export const SYNC_CONFIG = new InjectionToken<Partial<SyncConfig>>('SYNC_CONFIG');
 
@@ -90,6 +98,27 @@ export class SyncService {
       ...DEFAULT_SYNC_CONFIG,
       ...customConfig
     };
+
+    this.registerEntityHandler(new SupabaseWorkoutRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseCardioRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseExerciseRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseMeasurementRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseMeasurementTypeRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseDailyStepsRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseWorkoutPlanRepository(supabaseAuth));
+    this.registerEntityHandler(new SupabaseSettingsRepository(supabaseAuth));
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sync-requested', () => {
+        const supaUser = this.supabaseAuth.currentUser();
+        console.log('sync-requested event received. supaUser:', supaUser, 'isOnline:', this.networkStatus.isOnline());
+        if (this.networkStatus.isOnline() && !this.isSyncingSignal() && supaUser && supaUser.id !== 'user_jan_1') {
+          this.sync().catch(err => console.error('Sync triggered from event failed:', err));
+        } else {
+          console.warn('Sync condition not met:', { isOnline: this.networkStatus.isOnline(), isSyncing: this.isSyncingSignal(), supaUser });
+        }
+      });
+    }
 
     try {
       effect(() => {
@@ -279,6 +308,7 @@ export class SyncService {
           await this.queueRepository.updateStatus(item.id, 'synced');
           result.successCount++;
         } catch (pushErr: any) {
+          console.error('Supabase PUSH sync error for item:', item, pushErr);
           const errorMessage = pushErr instanceof Error ? pushErr.message : String(pushErr);
           const newStatus = await this.queueRepository.incrementRetry(
             item.id,

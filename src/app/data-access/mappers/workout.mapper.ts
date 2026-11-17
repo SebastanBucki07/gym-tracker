@@ -3,7 +3,7 @@ import { Workout, WorkoutSet } from '../contracts/workout.model';
 export function toSupabaseWorkout(workout: Workout): any {
   return {
     id: workout.id,
-    user_id: workout.userId,
+    user_id: workout.userId ? (workout.userId.startsWith('supa_') ? workout.userId.replace('supa_', '') : workout.userId) : null,
     name: workout.name,
     started_at: workout.startedAt instanceof Date ? workout.startedAt.toISOString() : workout.startedAt,
     completed_at: workout.completedAt ? (workout.completedAt instanceof Date ? workout.completedAt.toISOString() : workout.completedAt) : null,
@@ -18,7 +18,7 @@ export function toSupabaseWorkout(workout: Workout): any {
 export function fromSupabaseWorkout(row: any): Workout {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ? `supa_${row.user_id}` : row.user_id,
     name: row.name,
     startedAt: new Date(row.started_at),
     completedAt: row.completed_at ? new Date(row.completed_at) : undefined,

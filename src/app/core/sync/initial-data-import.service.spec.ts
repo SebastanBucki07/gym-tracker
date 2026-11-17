@@ -134,7 +134,7 @@ describe('InitialDataImportService (Stage 13D.3 Security & Audit Tests)', () => 
     expect(progress.errors.length).toBe(0);
     expect(progress.importedRecords).toBe(1);
     expect(upsertSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'w_legacy', user_id: testSupabaseUserId }),
+      expect.objectContaining({ id: 'w_legacy', user_id: testSupabaseUserId.replace('supa_', '') }),
       { onConflict: 'id' }
     );
   });
@@ -159,7 +159,7 @@ describe('InitialDataImportService (Stage 13D.3 Security & Audit Tests)', () => 
     expect(progress2.importedRecords).toBe(1);
     expect(upsertSpy).toHaveBeenCalledTimes(2);
     expect(upsertSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'set_1', user_id: testSupabaseUserId }),
+      expect.objectContaining({ id: 'set_1', user_id: testSupabaseUserId.replace('supa_', '') }),
       { onConflict: 'id' }
     );
   });
