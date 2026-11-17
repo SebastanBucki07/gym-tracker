@@ -19,6 +19,10 @@ export class SupabaseAuthService {
   isLoading = this.loadingSignal.asReadonly();
   isConfigError = this.configErrorSignal.asReadonly();
 
+  getSupabaseClient(): SupabaseClient | null {
+    return this.supabase;
+  }
+
   constructor() {
     this.initSupabase();
   }

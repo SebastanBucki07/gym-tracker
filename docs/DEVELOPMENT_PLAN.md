@@ -143,12 +143,13 @@ Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
 - [x] Supabase SQL security & deployment audit (Stage 13C.2.1).
 - [x] Supabase SQL finalization (`001_schema.sql`, `004_sync_metadata.sql`, `SQL_SECURITY_AUDIT.md`, Stage 13C.2.2).
 - [x] Central Sync Foundation & Architecture (`SyncService`, `LocalSyncQueueRepository`, Dexie schema v2, Stage 13D.1).
-- [ ] Supabase database repository implementations and mappers.
+- [x] Supabase database repository implementations and mappers (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`, mappers, Stage 13D.2).
 - [ ] Safe local-to-cloud initial import workflow and wizard UI.
 - [ ] Bidirectional sync handlers and conflict resolution.
 - [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 13D.1 — Sync Foundation: implemented central bidirectional sync architecture foundation between Dexie and Supabase. Added Dexie schema version 2 (`syncQueue` and `syncMetadata` stores), `LocalSyncQueueRepository`, and `SyncService` with reactive signals (`status`, `isSyncing`, `pendingCount`, `failedCount`, `isOnline`, `isAuthenticated`). Enforced strict per-user Supabase UUID isolation with zero fallback to `user_jan_1`, retry management with exponential/linear handling, missing session guard (`SyncAuthError`), offline-to-online auto-sync trigger, and extensible entity handler registration without false synced status markings. All 86 unit and integration tests passing (`npx ng test --watch=false`), production build verified.
+Stage 13D.2 — Supabase Repositories & Mappers: implemented comprehensive data mappers (`workout.mapper.ts`, `exercise.mapper.ts`, `measurement.mapper.ts`, `cardio.mapper.ts`, `steps.mapper.ts`, `settings.mapper.ts`, `workout-plan.mapper.ts`) translating between domain models and remote Supabase snake_case/ISO schema representations. Implemented remote Supabase database repositories (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseMeasurementTypeRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`) implementing `SyncEntityHandler` for integration with `SyncService` outbox queue processing. Verified with 86 passing unit tests and successful production build.
+
 
