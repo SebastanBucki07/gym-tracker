@@ -21,16 +21,13 @@ export class LocalCardioRepository implements CardioRepository {
       payload: activity
     });
 
-    await db.transaction('rw', db.cardioActivities, db.syncQueue, async () => {
-      const existing = await db.cardioActivities.get(activity.id);
-      if (existing) {
-        await db.cardioActivities.update(activity.id, activity as any);
-      } else {
-        await db.cardioActivities.add(activity);
-      }
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-      }
+    const existing = await db.cardioActivities.get(activity.id);
+
+    await db.transaction('rw', db.cardioActivities, db.syncQueue, () => {
+      const op = existing
+        ? db.cardioActivities.update(activity.id, activity as any)
+        : db.cardioActivities.add(activity);
+      return op.then(() => queueItem ? db.syncQueue.put(queueItem) : undefined);
     });
 
     if (queueItem && typeof window !== 'undefined') {
@@ -40,53 +37,43 @@ export class LocalCardioRepository implements CardioRepository {
   }
 
   async updateActivity(id: string, changes: Partial<CardioActivity>): Promise<void> {
-    let hasQueueItem = false;
-
-    await db.transaction('rw', db.cardioActivities, db.syncQueue, async () => {
-      const existing = await db.cardioActivities.get(id);
-      if (!existing) return;
-      const updated = { ...existing, ...changes };
-      const queueItem = createSyncQueueItem({
-        userId: updated.userId,
-        entityType: 'cardio',
-        entityId: id,
-        operation: 'update',
-        payload: updated
-      });
-
-      await db.cardioActivities.update(id, updated);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
+    const existing = await db.cardioActivities.get(id);
+    if (!existing) return;
+    const updated = { ...existing, ...changes };
+    const queueItem = createSyncQueueItem({
+      userId: updated.userId,
+      entityType: 'cardio',
+      entityId: id,
+      operation: 'update',
+      payload: updated
     });
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    await db.transaction('rw', db.cardioActivities, db.syncQueue, () =>
+      db.cardioActivities.update(id, updated)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
+
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }
 
   async deleteActivity(id: string): Promise<void> {
-    let hasQueueItem = false;
-
-    await db.transaction('rw', db.cardioActivities, db.syncQueue, async () => {
-      const existing = await db.cardioActivities.get(id);
-      if (!existing) return;
-      const queueItem = createSyncQueueItem({
-        userId: existing.userId,
-        entityType: 'cardio',
-        entityId: id,
-        operation: 'delete'
-      });
-
-      await db.cardioActivities.delete(id);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
+    const existing = await db.cardioActivities.get(id);
+    if (!existing) return;
+    const queueItem = createSyncQueueItem({
+      userId: existing.userId,
+      entityType: 'cardio',
+      entityId: id,
+      operation: 'delete'
     });
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    await db.transaction('rw', db.cardioActivities, db.syncQueue, () =>
+      db.cardioActivities.delete(id)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
+
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }

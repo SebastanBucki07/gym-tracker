@@ -21,16 +21,13 @@ export class LocalProgressPhotoRepository implements ProgressPhotoRepository {
       payload: item
     });
 
-    await db.transaction('rw', db.progressPhotos, db.syncQueue, async () => {
-      const existing = await db.progressPhotos.get(item.id);
-      if (existing) {
-        await db.progressPhotos.update(item.id, item as any);
-      } else {
-        await db.progressPhotos.add(item);
-      }
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-      }
+    const existing = await db.progressPhotos.get(item.id);
+
+    await db.transaction('rw', db.progressPhotos, db.syncQueue, () => {
+      const op = existing
+        ? db.progressPhotos.update(item.id, item as any)
+        : db.progressPhotos.add(item);
+      return op.then(() => queueItem ? db.syncQueue.put(queueItem) : undefined);
     });
 
     if (queueItem && typeof window !== 'undefined') {
@@ -40,53 +37,43 @@ export class LocalProgressPhotoRepository implements ProgressPhotoRepository {
   }
 
   async update(id: string, changes: Partial<ProgressPhoto>): Promise<void> {
-    let hasQueueItem = false;
-
-    await db.transaction('rw', db.progressPhotos, db.syncQueue, async () => {
-      const existing = await db.progressPhotos.get(id);
-      if (!existing) return;
-      const updated = { ...existing, ...changes };
-      const queueItem = createSyncQueueItem({
-        userId: updated.userId,
-        entityType: 'progressPhoto',
-        entityId: id,
-        operation: 'update',
-        payload: updated
-      });
-
-      await db.progressPhotos.update(id, updated);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
+    const existing = await db.progressPhotos.get(id);
+    if (!existing) return;
+    const updated = { ...existing, ...changes };
+    const queueItem = createSyncQueueItem({
+      userId: updated.userId,
+      entityType: 'progressPhoto',
+      entityId: id,
+      operation: 'update',
+      payload: updated
     });
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    await db.transaction('rw', db.progressPhotos, db.syncQueue, () =>
+      db.progressPhotos.update(id, updated)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
+
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }
 
   async delete(id: string): Promise<void> {
-    let hasQueueItem = false;
-
-    await db.transaction('rw', db.progressPhotos, db.syncQueue, async () => {
-      const existing = await db.progressPhotos.get(id);
-      if (!existing) return;
-      const queueItem = createSyncQueueItem({
-        userId: existing.userId,
-        entityType: 'progressPhoto',
-        entityId: id,
-        operation: 'delete'
-      });
-
-      await db.progressPhotos.delete(id);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
+    const existing = await db.progressPhotos.get(id);
+    if (!existing) return;
+    const queueItem = createSyncQueueItem({
+      userId: existing.userId,
+      entityType: 'progressPhoto',
+      entityId: id,
+      operation: 'delete'
     });
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    await db.transaction('rw', db.progressPhotos, db.syncQueue, () =>
+      db.progressPhotos.delete(id)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
+
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }

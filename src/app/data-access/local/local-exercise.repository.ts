@@ -26,16 +26,13 @@ export class LocalExerciseRepository implements ExerciseRepository {
       payload: exercise
     }) : null;
 
-    await db.transaction('rw', db.exercises, db.syncQueue, async () => {
-      const existing = await db.exercises.get(exercise.id);
-      if (existing) {
-        await db.exercises.update(exercise.id, exercise as any);
-      } else {
-        await db.exercises.add(exercise);
-      }
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-      }
+    const existing = await db.exercises.get(exercise.id);
+
+    await db.transaction('rw', db.exercises, db.syncQueue, () => {
+      const op = existing
+        ? db.exercises.update(exercise.id, exercise as any)
+        : db.exercises.add(exercise);
+      return op.then(() => queueItem ? db.syncQueue.put(queueItem) : undefined);
     });
 
     if (queueItem && typeof window !== 'undefined') {
@@ -45,53 +42,43 @@ export class LocalExerciseRepository implements ExerciseRepository {
   }
 
   async update(id: string, changes: Partial<Exercise>): Promise<void> {
-    let hasQueueItem = false;
+    const existing = await db.exercises.get(id);
+    if (!existing) return;
+    const updated = { ...existing, ...changes, updatedAt: new Date() };
+    const queueItem = updated.source === 'user' && updated.userId ? createSyncQueueItem({
+      userId: updated.userId,
+      entityType: 'exercise',
+      entityId: id,
+      operation: 'update',
+      payload: updated
+    }) : null;
 
-    await db.transaction('rw', db.exercises, db.syncQueue, async () => {
-      const existing = await db.exercises.get(id);
-      if (!existing) return;
-      const updated = { ...existing, ...changes, updatedAt: new Date() };
-      const queueItem = updated.source === 'user' && updated.userId ? createSyncQueueItem({
-        userId: updated.userId,
-        entityType: 'exercise',
-        entityId: id,
-        operation: 'update',
-        payload: updated
-      }) : null;
+    await db.transaction('rw', db.exercises, db.syncQueue, () =>
+      db.exercises.update(id, updated)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
 
-      await db.exercises.update(id, updated);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
-    });
-
-    if (hasQueueItem && typeof window !== 'undefined') {
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }
 
   async delete(id: string): Promise<void> {
-    let hasQueueItem = false;
+    const existing = await db.exercises.get(id);
+    if (!existing) return;
+    const queueItem = existing.source === 'user' && existing.userId ? createSyncQueueItem({
+      userId: existing.userId,
+      entityType: 'exercise',
+      entityId: id,
+      operation: 'delete'
+    }) : null;
 
-    await db.transaction('rw', db.exercises, db.syncQueue, async () => {
-      const existing = await db.exercises.get(id);
-      if (!existing) return;
-      const queueItem = existing.source === 'user' && existing.userId ? createSyncQueueItem({
-        userId: existing.userId,
-        entityType: 'exercise',
-        entityId: id,
-        operation: 'delete'
-      }) : null;
+    await db.transaction('rw', db.exercises, db.syncQueue, () =>
+      db.exercises.delete(id)
+        .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+    );
 
-      await db.exercises.delete(id);
-      if (queueItem) {
-        await db.syncQueue.put(queueItem);
-        hasQueueItem = true;
-      }
-    });
-
-    if (hasQueueItem && typeof window !== 'undefined') {
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }

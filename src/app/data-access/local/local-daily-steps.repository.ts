@@ -17,47 +17,43 @@ export class LocalDailyStepsRepository implements DailyStepsRepository {
   }
 
   async upsert(steps: DailySteps): Promise<void> {
-    let hasQueueItem = false;
+    const existing = await db.dailySteps.where('[userId+date]').equals([steps.userId, steps.date]).first();
+    let queueItem: any = null;
 
-    await db.transaction('rw', db.dailySteps, db.syncQueue, async () => {
-      const existing = await db.dailySteps.where('[userId+date]').equals([steps.userId, steps.date]).first();
-      if (existing) {
-        const updated = {
-          ...existing,
-          stepsCount: steps.stepsCount,
-          updatedAt: new Date()
-        };
-        const queueItem = createSyncQueueItem({
-          userId: steps.userId,
-          entityType: 'dailySteps',
-          entityId: existing.id,
-          operation: 'update',
-          payload: updated
-        });
+    if (existing) {
+      const updated = {
+        ...existing,
+        stepsCount: steps.stepsCount,
+        updatedAt: new Date()
+      };
+      queueItem = createSyncQueueItem({
+        userId: steps.userId,
+        entityType: 'dailySteps',
+        entityId: existing.id,
+        operation: 'update',
+        payload: updated
+      });
 
-        await db.dailySteps.update(existing.id, updated);
-        if (queueItem) {
-          await db.syncQueue.put(queueItem);
-          hasQueueItem = true;
-        }
-      } else {
-        const queueItem = createSyncQueueItem({
-          userId: steps.userId,
-          entityType: 'dailySteps',
-          entityId: steps.id,
-          operation: 'create',
-          payload: steps
-        });
+      await db.transaction('rw', db.dailySteps, db.syncQueue, () =>
+        db.dailySteps.update(existing.id, updated)
+          .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+      );
+    } else {
+      queueItem = createSyncQueueItem({
+        userId: steps.userId,
+        entityType: 'dailySteps',
+        entityId: steps.id,
+        operation: 'create',
+        payload: steps
+      });
 
-        await db.dailySteps.add(steps);
-        if (queueItem) {
-          await db.syncQueue.put(queueItem);
-          hasQueueItem = true;
-        }
-      }
-    });
+      await db.transaction('rw', db.dailySteps, db.syncQueue, () =>
+        db.dailySteps.add(steps)
+          .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+      );
+    }
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }

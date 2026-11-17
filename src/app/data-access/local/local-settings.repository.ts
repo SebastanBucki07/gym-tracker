@@ -9,42 +9,38 @@ export class LocalSettingsRepository implements SettingsRepository {
   }
 
   async upsert(settings: AppSettings): Promise<void> {
-    let hasQueueItem = false;
+    const existing = await this.getByUserId(settings.userId);
+    let queueItem: any = null;
 
-    await db.transaction('rw', db.appSettings, db.syncQueue, async () => {
-      const existing = await this.getByUserId(settings.userId);
-      if (existing) {
-        const queueItem = createSyncQueueItem({
-          userId: settings.userId,
-          entityType: 'appSettings',
-          entityId: existing.id,
-          operation: 'update',
-          payload: settings
-        });
+    if (existing) {
+      queueItem = createSyncQueueItem({
+        userId: settings.userId,
+        entityType: 'appSettings',
+        entityId: existing.id,
+        operation: 'update',
+        payload: settings
+      });
 
-        await db.appSettings.update(existing.id, settings as any);
-        if (queueItem) {
-          await db.syncQueue.put(queueItem);
-          hasQueueItem = true;
-        }
-      } else {
-        const queueItem = createSyncQueueItem({
-          userId: settings.userId,
-          entityType: 'appSettings',
-          entityId: settings.id,
-          operation: 'create',
-          payload: settings
-        });
+      await db.transaction('rw', db.appSettings, db.syncQueue, () =>
+        db.appSettings.update(existing.id, settings as any)
+          .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+      );
+    } else {
+      queueItem = createSyncQueueItem({
+        userId: settings.userId,
+        entityType: 'appSettings',
+        entityId: settings.id,
+        operation: 'create',
+        payload: settings
+      });
 
-        await db.appSettings.add(settings);
-        if (queueItem) {
-          await db.syncQueue.put(queueItem);
-          hasQueueItem = true;
-        }
-      }
-    });
+      await db.transaction('rw', db.appSettings, db.syncQueue, () =>
+        db.appSettings.add(settings)
+          .then(() => queueItem ? db.syncQueue.put(queueItem) : undefined)
+      );
+    }
 
-    if (hasQueueItem && typeof window !== 'undefined') {
+    if (queueItem && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sync-requested'));
     }
   }
