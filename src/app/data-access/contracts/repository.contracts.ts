@@ -68,3 +68,6 @@ export interface SettingsRepository {
   getByUserId(userId: string): Promise<AppSettings | undefined>;
   upsert(settings: AppSettings): Promise<void>;
 }
+
+export * from './sync.model';
+

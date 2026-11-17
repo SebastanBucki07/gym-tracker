@@ -19,6 +19,7 @@ import {
 import { DailySteps } from '../contracts/daily-steps.model';
 import { ProgressPhoto } from '../contracts/progress-photo.model';
 import { AppSettings } from '../contracts/settings.model';
+import { SyncQueueItem, SyncMetadata } from '../contracts/sync.model';
 
 export class AppDatabase extends Dexie {
 
@@ -43,6 +44,9 @@ export class AppDatabase extends Dexie {
   progressPhotos!: Table<ProgressPhoto, string>;
 
   appSettings!: Table<AppSettings, string>;
+
+  syncQueue!: Table<SyncQueueItem, string>;
+  syncMetadata!: Table<SyncMetadata, string>;
 
   constructor() {
     super('GymTrackerDB');
@@ -88,6 +92,13 @@ export class AppDatabase extends Dexie {
       appSettings:
         'id, userId'
 
+    });
+
+    this.version(2).stores({
+      syncQueue:
+        'id, userId, entityType, entityId, status, createdAt, updatedAt, [userId+status], [userId+entityType]',
+      syncMetadata:
+        'id, userId, entityType, [userId+entityType]'
     });
   }
 }

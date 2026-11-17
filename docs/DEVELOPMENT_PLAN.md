@@ -128,7 +128,7 @@ Status: COMPLETED
 - [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: IN PROGRESS (Stage 13C.2.2 Supabase SQL Finalization Completed)
+Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
 - [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
 - [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
 - [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
@@ -142,10 +142,13 @@ Status: IN PROGRESS (Stage 13C.2.2 Supabase SQL Finalization Completed)
 - [x] Supabase cloud schema deployment preparation (Stage 13C.2).
 - [x] Supabase SQL security & deployment audit (Stage 13C.2.1).
 - [x] Supabase SQL finalization (`001_schema.sql`, `004_sync_metadata.sql`, `SQL_SECURITY_AUDIT.md`, Stage 13C.2.2).
-- [ ] Repository implementations and mappers.
-- [ ] JSON import/migration workflow.
-- [ ] Security and migration tests.
+- [x] Central Sync Foundation & Architecture (`SyncService`, `LocalSyncQueueRepository`, Dexie schema v2, Stage 13D.1).
+- [ ] Supabase database repository implementations and mappers.
+- [ ] Safe local-to-cloud initial import workflow and wizard UI.
+- [ ] Bidirectional sync handlers and conflict resolution.
+- [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 13C.2.2 — Supabase SQL finalization: finalized Supabase deployment SQL scripts with workout_sets performance indexing (`idx_workout_sets_workout_id`), restricted function execution privileges (`REVOKE FROM PUBLIC`), clarified sync placeholder status (`get_user_deltas`), and updated audit documentation (`SQL_SECURITY_AUDIT.md`, PASS classification).
+Stage 13D.1 — Sync Foundation: implemented central bidirectional sync architecture foundation between Dexie and Supabase. Added Dexie schema version 2 (`syncQueue` and `syncMetadata` stores), `LocalSyncQueueRepository`, and `SyncService` with reactive signals (`status`, `isSyncing`, `pendingCount`, `failedCount`, `isOnline`, `isAuthenticated`). Enforced strict per-user Supabase UUID isolation with zero fallback to `user_jan_1`, retry management with exponential/linear handling, missing session guard (`SyncAuthError`), offline-to-online auto-sync trigger, and extensible entity handler registration without false synced status markings. All 86 unit and integration tests passing (`npx ng test --watch=false`), production build verified.
+
