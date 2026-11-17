@@ -14,7 +14,7 @@ export type SyncOperation = 'create' | 'update' | 'delete';
 
 export type SyncItemStatus = 'pending' | 'processing' | 'failed' | 'synced';
 
-export type SyncStatus = 'idle' | 'syncing' | 'offline' | 'error' | 'unauthenticated';
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'offline' | 'error' | 'unauthenticated' | 'conflict';
 
 export interface SyncQueueItem<T = any> {
   id: string;

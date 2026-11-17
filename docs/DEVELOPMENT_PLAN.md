@@ -145,12 +145,13 @@ Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
 - [x] Central Sync Foundation & Architecture (`SyncService`, `LocalSyncQueueRepository`, Dexie schema v2, Stage 13D.1).
 - [x] Supabase database repository implementations and mappers (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`, mappers, Stage 13D.2).
 - [x] Safe local-to-cloud initial import workflow and wizard UI (`InitialDataImportService`, `InitialImportWizardComponent`, tests, Stage 13D.3).
-- [ ] Bidirectional sync handlers and conflict resolution.
+- [x] Bidirectional sync handlers and conflict resolution (`SyncService.sync()`, delta pull checkpoints, conflict protection for unsynced local changes, account isolation, serialization lock, 102 passing unit tests, Stage 13D.4).
 - [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 13D.3 — Initial Data Import: implemented explicit, secure local-to-cloud initial data import (`InitialDataImportService`) and UI wizard (`InitialImportWizardComponent`). Enforced active Supabase Auth session requirement, strict ownership mapping from `auth.uid()`, detection and override handling for ambiguous legacy `user_jan_1` records, dependency-ordered table import, idempotent `upsert` with conflict keys, partial error collection, resume capabilities, and local Dexie data preservation. Verified with 94 passing unit tests (`npx ng test --watch=false`) and successful production build.
+Stage 13D.4 — Bidirectional Synchronization: implemented full automatic bidirectional synchronization engine in `SyncService` combining Push (outbox queue processing) and Pull (incremental delta fetch based on `updated_at` and `syncMetadata` pull checkpoints). Implemented conflict detection protecting local unsynced changes from silent remote overwrites, automatic trigger serialization (`syncLock`), account switching/logout safety, retry with backoff, and preservation of local data. Verified with 102 passing unit tests (`npx ng test --watch=false`) and successful production build.
+
 
 
 

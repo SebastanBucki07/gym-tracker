@@ -335,7 +335,7 @@ describe('SyncService (Stage 13D.1 — Sync Foundation)', () => {
       expect(retryResult.successCount).toBe(1);
       expect(syncService.failedCount()).toBe(0);
       expect(syncService.pendingCount()).toBe(0);
-      expect(syncService.status()).toBe('idle');
+      expect(syncService.status()).toBe('synced');
 
       const stored = await queueRepo.getById(item.id);
       expect(stored?.status).toBe('synced');

@@ -10,6 +10,7 @@ import {
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
 import { NetworkStatusService } from '../pwa/network-status.service';
 import { LocalSyncQueueRepository } from '../../data-access/local/local-sync-queue.repository';
+import { db } from '../../data-access/local/app-database';
 import {
   DEFAULT_SYNC_CONFIG,
   SyncAuthError,
@@ -22,8 +23,20 @@ import {
   SyncState,
   SyncStatus
 } from '../../data-access/contracts/sync.model';
+import { fromSupabaseWorkout, fromSupabaseWorkoutSet } from '../../data-access/mappers/workout.mapper';
+import { fromSupabaseExercise } from '../../data-access/mappers/exercise.mapper';
+import { fromSupabaseBodyMeasurement, fromSupabaseMeasurementType } from '../../data-access/mappers/measurement.mapper';
+import { fromSupabaseCardioActivity } from '../../data-access/mappers/cardio.mapper';
+import { fromSupabaseDailySteps } from '../../data-access/mappers/steps.mapper';
+import { fromSupabaseAppSettings } from '../../data-access/mappers/settings.mapper';
+import { fromSupabaseWorkoutPlan } from '../../data-access/mappers/workout-plan.mapper';
 
 export const SYNC_CONFIG = new InjectionToken<Partial<SyncConfig>>('SYNC_CONFIG');
+
+export interface BidirectionalSyncResult extends SyncProcessResult {
+  pulledCount: number;
+  conflictsCount: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +49,7 @@ export class SyncService {
   private isSyncingSignal = signal<boolean>(false);
   private pendingCountSignal = signal<number>(0);
   private failedCountSignal = signal<number>(0);
+  private conflictsCountSignal = signal<number>(0);
   private lastSyncAtSignal = signal<Date | null>(null);
   private lastErrorSignal = signal<string | null>(null);
 
@@ -47,6 +61,7 @@ export class SyncService {
   readonly isSyncing = this.isSyncingSignal.asReadonly();
   readonly pendingCount = this.pendingCountSignal.asReadonly();
   readonly failedCount = this.failedCountSignal.asReadonly();
+  readonly conflictsCount = this.conflictsCountSignal.asReadonly();
   readonly lastSyncAt = this.lastSyncAtSignal.asReadonly();
   readonly lastError = this.lastErrorSignal.asReadonly();
 
@@ -101,6 +116,7 @@ export class SyncService {
       this.statusSignal.set('unauthenticated');
       this.pendingCountSignal.set(0);
       this.failedCountSignal.set(0);
+      this.conflictsCountSignal.set(0);
       this.lastErrorSignal.set(null);
       return;
     }
@@ -108,6 +124,7 @@ export class SyncService {
     if (userChanged) {
       this.pendingCountSignal.set(0);
       this.failedCountSignal.set(0);
+      this.conflictsCountSignal.set(0);
     }
 
     if (!isOnline) {
@@ -124,8 +141,8 @@ export class SyncService {
 
     await this.refreshCounts(currentUserId);
 
-    if (onlineChanged && isOnline && this.config.autoSyncOnOnline) {
-      await this.processQueue().catch(() => {});
+    if ((onlineChanged || userChanged) && isOnline && this.config.autoSyncOnOnline) {
+      await this.sync().catch(() => {});
     }
   }
 
@@ -190,20 +207,30 @@ export class SyncService {
     await this.refreshCounts(userId);
 
     if (triggerSync && this.networkStatus.isOnline() && !this.isSyncingSignal()) {
-      await this.processQueue();
+      await this.sync();
     }
 
     return item;
   }
 
   async processQueue(): Promise<SyncProcessResult> {
+    const res = await this.sync();
+    return {
+      processedCount: res.processedCount,
+      successCount: res.successCount,
+      failedCount: res.failedCount,
+      errors: res.errors
+    };
+  }
+
+  async sync(): Promise<BidirectionalSyncResult> {
     if (this.syncLock) {
-      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [] };
+      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [], pulledCount: 0, conflictsCount: 0 };
     }
 
     if (!this.networkStatus.isOnline()) {
       this.statusSignal.set('offline');
-      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [] };
+      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [], pulledCount: 0, conflictsCount: 0 };
     }
 
     let userId: string;
@@ -211,30 +238,37 @@ export class SyncService {
       userId = this.getActiveSupabaseUserId();
     } catch {
       this.statusSignal.set('unauthenticated');
-      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [] };
+      return { processedCount: 0, successCount: 0, failedCount: 0, errors: [], pulledCount: 0, conflictsCount: 0 };
     }
 
     this.syncLock = true;
     this.isSyncingSignal.set(true);
     this.statusSignal.set('syncing');
 
-    const result: SyncProcessResult = {
+    const result: BidirectionalSyncResult = {
       processedCount: 0,
       successCount: 0,
       failedCount: 0,
-      errors: []
+      errors: [],
+      pulledCount: 0,
+      conflictsCount: 0
     };
 
     try {
+      // 1. PUSH: Outbox queue processing
       const pendingItems = await this.queueRepository.getPendingItems(userId, this.config.batchSize);
 
       for (const item of pendingItems) {
+        // Verify user ownership strictly
+        if (item.userId !== userId) {
+          result.errors.push({ itemId: item.id, error: 'Security violation: item user_id does not match active session.' });
+          continue;
+        }
+
         result.processedCount++;
         const handler = this.entityHandlers.get(item.entityType);
 
         if (!handler) {
-          // In Stage 13D.1, handlers are not yet wired to live Supabase backend.
-          // Items remain safely in pending state without false 'synced' markings.
           continue;
         }
 
@@ -258,10 +292,73 @@ export class SyncService {
         }
       }
 
-      await this.refreshCounts(userId);
+      // 2. PULL: Inbound delta sync per entity handler
+      for (const [entityType, handler] of this.entityHandlers.entries()) {
+        if (!handler.pull) continue;
 
-      if (result.errors.length > 0) {
+        try {
+          const metaId = `${userId}_${entityType}`;
+          const metadata = await db.syncMetadata.get(metaId);
+          const since = metadata?.lastPulledAt ? new Date(metadata.lastPulledAt) : null;
+
+          const remoteRecords = await handler.pull(userId, since);
+          if (remoteRecords && remoteRecords.length > 0) {
+            for (const remoteRecord of remoteRecords) {
+              const entityId = remoteRecord.id;
+
+              // Check conflict: does local record have active non-synced changes in queue?
+              const activeQueueItems = await db.syncQueue
+                .where('userId')
+                .equals(userId)
+                .filter(q => q.entityId === entityId && q.entityType === entityType && q.status !== 'synced')
+                .toArray();
+
+              if (activeQueueItems.length > 0) {
+                // Conflict detected: local has active changes. Protect local changes.
+                result.conflictsCount++;
+                result.errors.push({
+                  itemId: entityId,
+                  error: `Conflict for ${entityType} ${entityId}: local active changes preserved.`
+                });
+                continue;
+              }
+
+              // Handle deleted_at (tombstone)
+              if (remoteRecord.deleted_at) {
+                await this.applyDeleteLocally(entityType, entityId);
+              } else {
+                await this.applyRemoteRecordLocally(entityType, remoteRecord);
+              }
+              result.pulledCount++;
+            }
+          }
+
+          // Update checkpoint in syncMetadata
+          await db.syncMetadata.put({
+            id: metaId,
+            userId,
+            entityType,
+            lastPulledAt: new Date(),
+            lastPushedAt: new Date(),
+            updatedAt: new Date()
+          });
+        } catch (pullErr: any) {
+          const errMsg = pullErr instanceof Error ? pullErr.message : String(pullErr);
+          result.errors.push({ itemId: `pull_${entityType}`, error: errMsg });
+        }
+      }
+
+      await this.refreshCounts(userId);
+      this.conflictsCountSignal.set(result.conflictsCount);
+
+      if (result.conflictsCount > 0) {
+        this.statusSignal.set('conflict');
+      } else if (result.errors.length > 0 && result.failedCount > 0) {
         this.statusSignal.set('error');
+      } else if (result.pulledCount > 0 || result.successCount > 0 || result.processedCount > 0) {
+        this.statusSignal.set('synced');
+        this.lastSyncAtSignal.set(new Date());
+        this.lastErrorSignal.set(null);
       } else {
         this.statusSignal.set('idle');
         this.lastErrorSignal.set(null);
@@ -279,12 +376,93 @@ export class SyncService {
     return result;
   }
 
-  async retryFailed(): Promise<SyncProcessResult> {
+  private async applyRemoteRecordLocally(entityType: SyncEntityType, record: any): Promise<void> {
+    switch (entityType) {
+      case 'workout': {
+        const workout = fromSupabaseWorkout(record);
+        await db.workouts.put(workout);
+        if (record.workout_sets && Array.isArray(record.workout_sets)) {
+          for (const s of record.workout_sets) {
+            const setObj = fromSupabaseWorkoutSet(s);
+            await db.workoutSets.put(setObj);
+          }
+        }
+        break;
+      }
+      case 'exercise': {
+        const ex = fromSupabaseExercise(record);
+        await db.exercises.put(ex);
+        break;
+      }
+      case 'measurement': {
+        const m = fromSupabaseBodyMeasurement(record);
+        await db.bodyMeasurements.put(m);
+        break;
+      }
+      case 'measurementType': {
+        const t = fromSupabaseMeasurementType(record);
+        await db.measurementTypes.put(t);
+        break;
+      }
+      case 'cardio': {
+        const c = fromSupabaseCardioActivity(record);
+        await db.cardioActivities.put(c);
+        break;
+      }
+      case 'dailySteps': {
+        const st = fromSupabaseDailySteps(record);
+        await db.dailySteps.put(st);
+        break;
+      }
+      case 'appSettings': {
+        const stg = fromSupabaseAppSettings(record);
+        await db.appSettings.put(stg);
+        break;
+      }
+      case 'workoutPlan': {
+        const p = fromSupabaseWorkoutPlan(record);
+        await db.workoutPlans.put(p);
+        break;
+      }
+    }
+  }
+
+  private async applyDeleteLocally(entityType: SyncEntityType, entityId: string): Promise<void> {
+    switch (entityType) {
+      case 'workout':
+        await db.workoutSets.where('workoutId').equals(entityId).delete();
+        await db.workouts.delete(entityId);
+        break;
+      case 'exercise':
+        await db.exercises.delete(entityId);
+        break;
+      case 'measurement':
+        await db.bodyMeasurements.delete(entityId);
+        break;
+      case 'measurementType':
+        await db.measurementTypes.delete(entityId);
+        break;
+      case 'cardio':
+        await db.cardioActivities.delete(entityId);
+        break;
+      case 'dailySteps':
+        await db.dailySteps.delete(entityId);
+        break;
+      case 'appSettings':
+        await db.appSettings.delete(entityId);
+        break;
+      case 'workoutPlan':
+        await db.workoutPlans.delete(entityId);
+        break;
+    }
+  }
+
+  async retryFailed(): Promise<BidirectionalSyncResult> {
     const userId = this.getActiveSupabaseUserId();
     await this.queueRepository.resetFailed(userId);
     await this.refreshCounts(userId);
     this.lastErrorSignal.set(null);
-    return await this.processQueue();
+    return await this.sync();
   }
 
   async clearQueueForCurrentUser(): Promise<void> {
