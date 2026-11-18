@@ -110,16 +110,36 @@
           border-collapse: collapse;
           min-width: 450px; /* Ensure table doesn't squash too much */
 
+          @media (max-width: 768px) {
+            min-width: 100%;
+          }
+
+          .hide-mobile { display: inline; }
+          .show-mobile { display: none; }
+
+          @media (max-width: 768px) {
+            .hide-mobile { display: none; }
+            .show-mobile { display: inline; }
+          }
+
           th, td {
             padding: 0.75rem 0.5rem;
             text-align: left;
             border-bottom: 1px solid var(--border-color, #eee);
+            
+            @media (max-width: 768px) {
+              padding: 0.5rem 0.2rem;
+            }
           }
 
           th {
             font-size: 0.85rem;
             color: var(--text-muted, #777);
             font-weight: 600;
+            
+            @media (max-width: 768px) {
+              font-size: 0.75rem;
+            }
           }
 
           tr.completed {
@@ -133,6 +153,10 @@
           .set-number {
             font-weight: 600;
             color: var(--text-muted, #555);
+            
+            @media (max-width: 768px) {
+              font-size: 0.85rem;
+            }
           }
 
           .input-number {
@@ -142,6 +166,11 @@
             border-radius: 6px;
             text-align: center;
             font-size: 16px; /* Prevents iOS zoom on focus */
+            
+            @media (max-width: 768px) {
+              width: 55px;
+              padding: 0.35rem 0.1rem;
+            }
           }
 
           .btn-check {
@@ -156,6 +185,12 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            
+            @media (max-width: 768px) {
+              width: 28px;
+              height: 28px;
+              font-size: 0.85rem;
+            }
 
             &.active {
               background: #28a745;
