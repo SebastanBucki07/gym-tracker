@@ -1,6 +1,6 @@
 
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ActiveWorkoutService } from './active-workout.service';
@@ -11,6 +11,7 @@ import { Exercise } from '../../../data-access/contracts/exercise.model';
 import { MuscleGroup } from '../../../data-access/contracts/muscle-group.model';
 import { EquipmentCategory } from '../../../data-access/contracts/equipment-category.model';
 import { db } from '../../../data-access/local/app-database';
+import { WorkoutHistoryService, LastExercisePerformance } from '../history/workout-history.service';
 
 @Component({
   selector: 'app-active-workout',
@@ -25,11 +26,13 @@ export class ActiveWorkoutComponent implements OnInit {
   private authService = inject(AuthService);
   private supabaseAuth = inject(SupabaseAuthService);
   private exerciseRepo = new LocalExerciseRepository();
+  private historyService = inject(WorkoutHistoryService);
   private router = inject(Router);
 
   exercisesCatalog = signal<Exercise[]>([]);
   muscleGroups = signal<MuscleGroup[]>([]);
   equipmentCategories = signal<EquipmentCategory[]>([]);
+  lastPerformances = signal<Map<string, LastExercisePerformance>>(new Map());
 
   showAddExerciseModal = signal(false);
   showSummaryModal = signal(false);
@@ -44,6 +47,41 @@ export class ActiveWorkoutComponent implements OnInit {
   selectedMuscleGroup = signal('');
 
   filteredCatalog = signal<Exercise[]>([]);
+
+  constructor() {
+    // Whenever exercises change, fetch missing history
+    effect(() => {
+      const exs = this.activeWorkoutService.workoutExercises();
+      const currentMap = this.lastPerformances();
+      let hasChanges = false;
+      
+      const newMap = new Map(currentMap);
+      
+      exs.forEach(ex => {
+        if (!newMap.has(ex.exerciseId)) {
+          hasChanges = true;
+          // Set to null temporarily to avoid infinite loops
+          newMap.set(ex.exerciseId, null as any);
+          this.fetchLastPerformance(ex.exerciseId);
+        }
+      });
+      
+      if (hasChanges) {
+        this.lastPerformances.set(newMap);
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  async fetchLastPerformance(exerciseId: string) {
+    const userId = this.authService.getCurrentUserId();
+    const perf = await this.historyService.getLastExercisePerformance(userId, exerciseId);
+    
+    if (perf) {
+      const currentMap = new Map(this.lastPerformances());
+      currentMap.set(exerciseId, perf);
+      this.lastPerformances.set(currentMap);
+    }
+  }
 
   async ngOnInit(): Promise<void> {
     const userId = this.authService.getCurrentUserId();
@@ -108,6 +146,12 @@ export class ActiveWorkoutComponent implements OnInit {
     }
 
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  formatDateForDisplay(date: Date | string): string {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   openAddExerciseModal(): void {

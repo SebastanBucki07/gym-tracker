@@ -40,11 +40,49 @@ export interface ProgressiveOverloadInfo {
   suggestionText: string;
 }
 
+export interface LastExercisePerformance {
+  workoutDate: Date;
+  maxWeight: number;
+  totalSets: number;
+  sets: { weight: number; repetitions: number; isWarmup: boolean; isCompleted: boolean }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WorkoutHistoryService {
   private workoutRepo = new LocalWorkoutRepository();
+
+  async getLastExercisePerformance(userId: string, exerciseId: string): Promise<LastExercisePerformance | null> {
+    const history = await this.getCompletedWorkouts(userId);
+
+    for (const item of history) {
+      const setsForExercise = item.sets.filter(s => s.exerciseId === exerciseId && s.isCompleted);
+      
+      if (setsForExercise.length > 0) {
+        let maxWeight = 0;
+        setsForExercise.forEach(s => {
+          if (!s.isWarmup && (s.weight || 0) > maxWeight) {
+            maxWeight = s.weight || 0;
+          }
+        });
+
+        return {
+          workoutDate: item.workout.completedAt || item.workout.startedAt,
+          maxWeight,
+          totalSets: setsForExercise.length,
+          sets: setsForExercise.map(s => ({
+            weight: s.weight || 0,
+            repetitions: s.repetitions || 0,
+            isWarmup: !!s.isWarmup,
+            isCompleted: !!s.isCompleted
+          }))
+        };
+      }
+    }
+    
+    return null;
+  }
 
   async getCompletedWorkouts(userId: string): Promise<WorkoutHistoryItem[]> {
     const workouts = await this.workoutRepo.getByUserId(userId);
