@@ -9,6 +9,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { LocalMeasurementRepository } from '../../data-access/local/local-measurement.repository';
 import { BodyMeasurement, MeasurementType, CANONICAL_BODY_WEIGHT_TYPE_ID } from '../../data-access/contracts/measurement.model';
 
+export interface MeasurementViewData {
+  type: MeasurementType;
+  options: EChartsCoreOption;
+  history: BodyMeasurement[];
+}
+
 @Component({
   selector: 'app-measurements',
   standalone: true,
@@ -24,7 +30,7 @@ export class MeasurementsComponent implements OnInit {
 
   measurementTypes = signal<MeasurementType[]>([]);
   measurements = signal<BodyMeasurement[]>([]);
-  selectedTypeId = signal<string>('');
+  viewData = signal<MeasurementViewData[]>([]);
   loading = signal<boolean>(true);
   isCreating = signal<boolean>(false);
   isCreatingType = signal<boolean>(false);
@@ -41,8 +47,6 @@ export class MeasurementsComponent implements OnInit {
     unit: ['kg', Validators.required]
   });
 
-  chartOptions = signal<EChartsCoreOption>({});
-
   async ngOnInit() {
     await this.loadData();
   }
@@ -56,107 +60,86 @@ export class MeasurementsComponent implements OnInit {
         this.measurementRepo.getTypes(userId),
         this.measurementRepo.getMeasurements(userId)
       ]);
-      this.measurementTypes.set(types);
+      
+      // Ensure body weight is always first
+      const sortedTypes = [...types].sort((a, b) => {
+        if (a.id === CANONICAL_BODY_WEIGHT_TYPE_ID) return -1;
+        if (b.id === CANONICAL_BODY_WEIGHT_TYPE_ID) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      this.measurementTypes.set(sortedTypes);
       this.measurements.set(allMeasurements);
-
-      if (types.length > 0 && (!this.selectedTypeId() || !types.some(t => t.id === this.selectedTypeId()))) {
-        const defaultType = types.find(t => t.id === CANONICAL_BODY_WEIGHT_TYPE_ID) || types[0];
-        this.selectedTypeId.set(defaultType.id);
-      }
-      this.updateChart();
+      this.buildViewData();
     } catch (err) {
       console.error('Error loading measurements:', err);
     } finally {
       this.loading.set(false);
     }
   }
-
-  selectType(typeId: string) {
-    this.selectedTypeId.set(typeId);
-    this.updateChart();
+  
+  scrollToType(typeId: string) {
+    const el = document.getElementById('chart-section-' + typeId);
+    if (el) {
+      // Offset for sticky header
+      const headerOffset = 80;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
   }
 
-  getSelectedTypeName(): string {
-    const t = this.measurementTypes().find(x => x.id === this.selectedTypeId());
-    return t ? t.name : '';
-  }
+  buildViewData() {
+    const types = this.measurementTypes();
+    const allMeas = this.measurements();
+    const result: MeasurementViewData[] = [];
 
-  getSelectedTypeUnit(): string {
-    const t = this.measurementTypes().find(x => x.id === this.selectedTypeId());
-    return t ? t.unit : '';
-  }
-
-  getFilteredMeasurements(): BodyMeasurement[] {
-    const typeId = this.selectedTypeId();
-    const isWeightSelected = typeId === CANONICAL_BODY_WEIGHT_TYPE_ID;
-    const list = this.measurements().filter(m => {
-      if (m.measurementTypeId === typeId) return true;
-      if (isWeightSelected && (m.measurementTypeId.startsWith('type_weight_') || m.measurementTypeId === 'meas_type_weight')) {
-        return true;
-      }
-      return false;
-    });
-    return list.sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
-  }
-
-  updateChart() {
-    const filtered = this.getFilteredMeasurements().sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime());
-    const typeName = this.getSelectedTypeName();
-    const unit = this.getSelectedTypeUnit();
-
-    const dates = filtered.map(m => new Date(m.measuredAt).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }));
-    const values = filtered.map(m => m.value);
-
-    this.chartOptions.set({
-      title: {
-        text: `Postęp: ${typeName}`,
-        left: 'center',
-        textStyle: { fontSize: 16 }
-      },
-      tooltip: {
-        trigger: 'axis'
-      },
-      xAxis: {
-        type: 'category',
-        data: dates
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: {
-          formatter: `{value} ${unit}`
+    for (const type of types) {
+      const isWeightSelected = type.id === CANONICAL_BODY_WEIGHT_TYPE_ID;
+      let filtered = allMeas.filter(m => {
+        if (m.measurementTypeId === type.id) return true;
+        if (isWeightSelected && (m.measurementTypeId.startsWith('type_weight_') || m.measurementTypeId === 'meas_type_weight')) {
+          return true;
         }
-      },
-      series: [
-        {
-          data: values,
-          type: 'line',
-          smooth: true,
-          lineStyle: { color: '#007bff', width: 3 },
+        return false;
+      });
+      
+      filtered = filtered.sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
+      
+      const chartData = [...filtered].sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime());
+      const dates = chartData.map(m => new Date(m.measuredAt).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+      const values = chartData.map(m => m.value);
+      
+      const options: EChartsCoreOption = {
+        title: { text: `Postęp: ${type.name}`, left: 'center', textStyle: { fontSize: 16 } },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dates },
+        yAxis: { type: 'value', axisLabel: { formatter: `{value} ${type.unit}` }, scale: true },
+        series: [{
+          data: values, type: 'line', smooth: true, lineStyle: { color: '#007bff', width: 3 },
           itemStyle: { color: '#007bff' },
           areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(0, 123, 255, 0.3)' },
-                { offset: 1, color: 'rgba(0, 123, 255, 0.0)' }
-              ]
+            color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [{ offset: 0, color: 'rgba(0, 123, 255, 0.3)' }, { offset: 1, color: 'rgba(0, 123, 255, 0.0)' }]
             }
           }
-        }
-      ],
-      grid: {
-        top: 50,
-        bottom: 30,
-        left: 50,
-        right: 20
-      }
-    });
+        }],
+        grid: { top: 50, bottom: 30, left: 50, right: 20 }
+      };
+      
+      result.push({ type, options, history: filtered });
+    }
+    
+    this.viewData.set(result);
   }
 
   openCreateModal() {
     this.measurementForm.reset({
-      measurementTypeId: this.selectedTypeId() || CANONICAL_BODY_WEIGHT_TYPE_ID,
+      measurementTypeId: this.measurementTypes()[0]?.id || CANONICAL_BODY_WEIGHT_TYPE_ID,
       value: 75,
       measuredAt: new Date().toISOString().substring(0, 10),
       notes: ''
@@ -171,7 +154,6 @@ export class MeasurementsComponent implements OnInit {
   async saveMeasurement() {
     if (this.measurementForm.invalid) return;
     const userId = this.authService.getCurrentUserId();
-
     const val = this.measurementForm.value;
     const measurement: BodyMeasurement = {
       id: 'meas_' + crypto.randomUUID(),
@@ -203,7 +185,6 @@ export class MeasurementsComponent implements OnInit {
   async saveMeasurementType() {
     if (this.typeForm.invalid) return;
     const userId = this.authService.getCurrentUserId();
-
     const val = this.typeForm.value;
     const typeId = 'type_' + crypto.randomUUID();
     const newType: MeasurementType = {
@@ -218,7 +199,6 @@ export class MeasurementsComponent implements OnInit {
       await this.measurementRepo.createMeasurementType(newType);
       this.closeTypeModal();
       await this.loadData();
-      this.selectType(typeId);
     } catch (err) {
       console.error('Error saving measurement type:', err);
     }

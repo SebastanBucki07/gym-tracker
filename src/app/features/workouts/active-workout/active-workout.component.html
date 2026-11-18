@@ -19,7 +19,7 @@
   <!-- Exercises List -->
   <div class="exercises-content">
     @for (ex of activeWorkoutService.workoutExercises(); track ex.clientId; let exIdx = $index) {
-      <div class="exercise-block card">
+      <div [id]="'exercise-block-' + ex.clientId" class="exercise-block card">
         <div class="exercise-block-header">
           <h3>{{ ex.exerciseName }}</h3>
           <div class="block-actions">

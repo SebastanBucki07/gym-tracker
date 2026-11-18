@@ -55,6 +55,16 @@ export class DashboardComponent implements OnInit {
 
   onMuscleSelected(stats: MuscleActivityStats | null) {
     this.selectedMuscle.set(stats);
+    
+    // On small screens, scroll to the details card when a muscle is selected
+    if (stats && window.innerWidth <= 768) {
+      setTimeout(() => {
+        const el = document.getElementById('muscle-details-card');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50); // slight delay to allow angular to render the new state
+    }
   }
 
   formatDuration(seconds: number): string {
