@@ -3,6 +3,8 @@ import { User } from '../../data-access/contracts/user.model';
 import { LocalUserRepository } from '../../data-access/local/local-user.repository';
 import { LocalSettingsRepository } from '../../data-access/local/local-settings.repository';
 import { DatabaseSeedService } from '../database/database-seed.service';
+import { SupabaseAuthService } from './supabase-auth.service';
+import { SyncService } from '../sync/sync.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,18 +15,42 @@ export class AuthService {
   private seedService = new DatabaseSeedService();
 
   private currentUserSignal = signal<User | null>(null);
+  private isInitializedSignal = signal<boolean>(false);
 
   currentUser = this.currentUserSignal.asReadonly();
-  isAuthenticated = computed(() => !!this.currentUserSignal());
+  isAuthenticated = computed(() => !!this.currentUserSignal() || (this.supabaseAuth?.isAuthenticated() ?? false));
+  isInitialized = this.isInitializedSignal.asReadonly();
 
-  constructor() {
+  constructor(
+    private supabaseAuth?: SupabaseAuthService,
+    private syncService?: SyncService
+  ) {
     this.initAuth();
   }
 
   private async initAuth() {
     await this.seedService.seedDatabase();
     await this.seedInitialUsersIfNeeded();
-    this.restoreSession();
+    await this.restoreSession();
+    this.isInitializedSignal.set(true);
+  }
+
+  async waitForSession(): Promise<boolean> {
+    if (this.isInitializedSignal()) {
+      return this.isAuthenticated();
+    }
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (this.isInitializedSignal()) {
+          clearInterval(interval);
+          resolve(this.isAuthenticated());
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(this.isAuthenticated());
+      }, 3000);
+    });
   }
 
   private async seedInitialUsersIfNeeded() {
@@ -73,15 +99,14 @@ export class AuthService {
     }
   }
 
-  private restoreSession() {
+  private async restoreSession(): Promise<void> {
     const savedUserId = localStorage.getItem('gym_tracker_current_user_id');
     if (savedUserId) {
-      this.userRepository.getById(savedUserId).then(async user => {
-        if (user) {
-          this.currentUserSignal.set(user);
-          await this.seedService.seedSampleUserDataForUser(user.id);
-        }
-      });
+      const user = await this.userRepository.getById(savedUserId);
+      if (user) {
+        this.currentUserSignal.set(user);
+        await this.seedService.seedSampleUserDataForUser(user.id);
+      }
     }
   }
 
@@ -146,5 +171,33 @@ export class AuthService {
 
   async getAllUsers(): Promise<User[]> {
     return await this.userRepository.getAll('');
+  }
+
+  getCurrentUserId(): string {
+    const localUser = this.currentUserSignal();
+    if (localUser) {
+      return localUser.id;
+    }
+
+    const supaUser = this.supabaseAuth?.currentUser?.();
+    if (supaUser && supaUser.id) {
+      const workspaceId = `supa_${supaUser.id}`;
+      this.userRepository.getById(workspaceId).then(existing => {
+        if (!existing) {
+          const email = supaUser.email || 'supabase@user.local';
+          const username = supaUser.user_metadata?.['username'] || email.split('@')[0];
+          this.userRepository.create({
+            id: workspaceId,
+            username,
+            email,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }).catch(() => {});
+        }
+      });
+      return workspaceId;
+    }
+
+    throw new Error('Brak aktywnego uwierzytelnionego użytkownika. Zaloguj się, aby kontynuować.');
   }
 }

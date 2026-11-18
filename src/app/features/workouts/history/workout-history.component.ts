@@ -32,16 +32,15 @@ export class WorkoutHistoryComponent implements OnInit {
   }
 
   async loadData() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
-      const items = await this.historyService.getCompletedWorkouts(user.id);
+      const items = await this.historyService.getCompletedWorkouts(userId);
       this.workouts.set(items);
       this.filteredWorkouts.set(items);
 
-      const prs = await this.historyService.getPersonalRecords(user.id);
+      const prs = await this.historyService.getPersonalRecords(userId);
       this.personalRecords.set(prs);
     } catch (err) {
       console.error('Error loading workout history:', err);

@@ -120,20 +120,40 @@ Status: COMPLETED
   - Browser limitations: `beforeinstallprompt` is standard on Chromium browsers (Chrome, Edge, Android Webview); iOS Safari requires "Add to Home Screen" from the Share menu.
 
 ## Stage 12 — Final QA
-Status: NOT STARTED
-- [ ] Full unit/integration suite.
-- [ ] Playwright critical flows and user isolation.
-- [ ] Accessibility/responsive/performance review.
-- [ ] Production build and documentation.
-- [ ] Final commits.
+Status: COMPLETED
+- [x] Full unit/integration suite.
+- [x] Playwright critical flows and user isolation.
+- [x] Accessibility/responsive/performance review.
+- [x] Production build and documentation.
+- [x] Final commits.
 
 ## Stage 13 — Future Supabase integration (later)
-Status: NOT STARTED
-- [ ] Supabase Auth, PostgreSQL, RLS, Storage.
-- [ ] Repository implementations and mappers.
-- [ ] JSON import/migration workflow.
-- [ ] Security and migration tests.
+Status: IN PROGRESS (Stage 13D.1 Sync Foundation Completed)
+- [x] Supabase Architecture Plan & Schema Audit (Stage 13A).
+- [x] Schema & Security Hardening, RLS, Storage RLS, and Schema Review (Stage 13A.1).
+- [x] Final SQL Review & Deployment Readiness (`DEPLOYMENT_READINESS.md`, Stage 13A.2).
+- [x] Supabase Auth implementation (`SupabaseAuthService`, login/signup UI, environment configuration, Stage 13B).
+- [x] Live Supabase Auth integration & verification documentation (`AUTH_LIVE_VERIFICATION.md`, Stage 13B.1).
+- [x] Auth redirect session restoration fix (`waitForSession` in `SupabaseAuthService` & async `authGuard`, Stage 13B.1).
+- [x] Local data integration after Supabase auth (Stage 13B.2).
+- [x] Supabase user data isolation (`supa_${supaUser.id}` workspace mapping, Stage 13B.3).
+- [x] Multi-account isolation audit (`ISOLATION_AUDIT.md`, Stage 13B.4).
+- [x] Migration readiness and data ownership audit (Stage 13C.1).
+- [x] Supabase cloud schema deployment preparation (Stage 13C.2).
+- [x] Supabase SQL security & deployment audit (Stage 13C.2.1).
+- [x] Supabase SQL finalization (`001_schema.sql`, `004_sync_metadata.sql`, `SQL_SECURITY_AUDIT.md`, Stage 13C.2.2).
+- [x] Central Sync Foundation & Architecture (`SyncService`, `LocalSyncQueueRepository`, Dexie schema v2, Stage 13D.1).
+- [x] Supabase database repository implementations and mappers (`SupabaseWorkoutRepository`, `SupabaseExerciseRepository`, `SupabaseMeasurementRepository`, `SupabaseCardioRepository`, `SupabaseDailyStepsRepository`, `SupabaseSettingsRepository`, `SupabaseWorkoutPlanRepository`, mappers, Stage 13D.2).
+- [x] Safe local-to-cloud initial import workflow and wizard UI (`InitialDataImportService`, `InitialImportWizardComponent`, tests, Stage 13D.3).
+- [x] Bidirectional sync handlers and conflict resolution (`SyncService.sync()`, delta pull checkpoints, conflict protection for unsynced local changes, account isolation, serialization lock, 102 passing unit tests, Stage 13D.4).
+- [x] End-to-End Verification of Bidirectional Synchronization (Stage 13D.5 comprehensive audit across checkpoints, logout/account switching race conditions, tombstones, multi-device, user isolation, fault tolerance, conflict policy, and initial import upsert protection with 5s overlap buffer and mid-sync session validation guard).
+- [ ] Supabase Storage integration for progress photos.
 - [ ] Commit.
 
 ## Current task
-Stage 11 — PWA/offline: complete PWA implementation with web app manifest, standard/maskable icons, Angular Service Worker caching app shell and static assets, offline detection with localized banners, PWA install prompt integration, and offline persistence validation.
+Stage 13D.5 — E2E Verification of Bidirectional Synchronization: performed exhaustive architectural and security audit across checkpoints (added 5s overlap buffer to prevent missing identical timestamps), logout/account switching race conditions (added mid-sync session validation guard), tombstones, multi-device, user isolation, fault tolerance, conflict policy, and initial import upsert protection. Verified with 102 passing unit tests (`npx ng test --watch=false`) and successful production build.
+
+
+
+
+

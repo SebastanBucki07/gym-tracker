@@ -1,8 +1,8 @@
 <div class="auth-container">
   <div class="auth-card">
     <h1>Gym Tracker</h1>
-    <h2>Rejestracja</h2>
-    
+    <h2>Rejestracja (Supabase Cloud)</h2>
+
     @if (errorMessage()) {
       <div class="alert error">{{ errorMessage() }}</div>
     }
@@ -18,8 +18,13 @@
         <input id="email" type="email" formControlName="email" placeholder="Wprowadź e-mail" />
       </div>
 
+      <div class="form-group">
+        <label for="password">Hasło</label>
+        <input id="password" type="password" formControlName="password" placeholder="Wprowadź hasło (min. 6 znaków)" />
+      </div>
+
       <button type="submit" class="btn primary" [disabled]="registerForm.invalid || loading()">
-        {{ loading() ? 'Rejestrowanie...' : 'Zarejestruj się' }}
+        {{ loading() ? 'Rejestracja...' : 'Zarejestruj przez Supabase' }}
       </button>
     </form>
 

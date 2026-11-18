@@ -34,12 +34,11 @@ export class DashboardComponent implements OnInit {
   }
 
   async loadDashboard() {
-    const user = this.authService.currentUser();
-    if (!user) return;
+    const userId = this.authService.getCurrentUserId();
 
     this.loading.set(true);
     try {
-      const data = await this.dashboardQuery.getDashboardSummary(user.id, this.selectedPreset());
+      const data = await this.dashboardQuery.getDashboardSummary(userId, this.selectedPreset());
       this.summary.set(data);
     } catch (err) {
       console.error('Error loading dashboard summary:', err);
