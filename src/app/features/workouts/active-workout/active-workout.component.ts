@@ -161,8 +161,26 @@ export class ActiveWorkoutComponent implements OnInit {
 
   selectExerciseToAdd(exercise: Exercise): void {
     this.activeWorkoutService.addExercise(exercise);
-
     this.closeAddExerciseModal();
+
+    setTimeout(() => {
+      const exercises = this.activeWorkoutService.workoutExercises();
+      if (exercises.length > 0) {
+        const lastEx = exercises[exercises.length - 1];
+        const el = document.getElementById('exercise-block-' + lastEx.clientId);
+        if (el) {
+          // Adjust position taking sticky headers or navs into account
+          const headerOffset = 100;
+          const elementPosition = el.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }, 100);
   }
 
   async finishWorkout(): Promise<void> {

@@ -83,12 +83,12 @@
             <input type="number" formControlName="averageHeartRate" placeholder="np. 140" />
           </div>
 
-          <div class="form-group">
+          <div class="form-group full-width">
             <label>Notatka (opcjonalnie)</label>
             <textarea formControlName="note" placeholder="Wrażenia, intensywność..."></textarea>
           </div>
 
-          <div class="modal-actions">
+          <div class="modal-actions full-width">
             <button type="submit" class="btn primary" [disabled]="cardioForm.invalid">Zapisz</button>
             <button type="button" class="btn secondary" (click)="closeModal()">Anuluj</button>
           </div>

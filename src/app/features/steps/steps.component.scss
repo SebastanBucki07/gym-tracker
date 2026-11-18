@@ -29,12 +29,13 @@
   }
 
   .steps-content-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 2rem;
 
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
+    @media (min-width: 768px) {
+      display: grid;
+      grid-template-columns: 320px 1fr;
     }
 
     .form-card, .history-card, .stat-card {

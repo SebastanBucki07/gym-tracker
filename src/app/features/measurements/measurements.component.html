@@ -13,52 +13,55 @@
   @if (loading()) {
     <p class="loading-text">Ładowanie pomiarów...</p>
   } @else {
-    <div class="types-tabs">
+    <div class="types-tabs sticky-nav">
       @for (type of measurementTypes(); track type.id) {
         <button 
           class="type-tab-btn" 
-          [class.active]="selectedTypeId() === type.id"
-          (click)="selectType(type.id)">
-          {{ type.name }} ({{ type.unit }})
+          (click)="scrollToType(type.id)">
+          {{ type.name }}
         </button>
       }
     </div>
 
-    <div class="chart-card">
-      <div echarts [options]="chartOptions()" class="echarts-container"></div>
-    </div>
+    @for (data of viewData(); track data.type.id) {
+      <div [id]="'chart-section-' + data.type.id" class="measurement-section">
+        <div class="chart-card">
+          <div echarts [options]="data.options" class="echarts-container"></div>
+        </div>
 
-    <div class="history-card">
-      <h3>Historia pomiarów: {{ getSelectedTypeName() }}</h3>
-      <div class="table-responsive">
-        <table class="measurements-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Wartość</th>
-              <th>Notatka</th>
-              <th>Akcje</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (m of getFilteredMeasurements(); track m.id) {
-              <tr>
-                <td>{{ formatDate(m.measuredAt) }}</td>
-                <td><strong>{{ m.value }} {{ getSelectedTypeUnit() }}</strong></td>
-                <td>{{ m.notes || '-' }}</td>
-                <td>
-                  <button class="btn danger sm" (click)="deleteMeasurement(m.id)">Usuń</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="4" class="empty-state">Brak pomiarów dla wybranej kategorii.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <div class="history-card">
+          <h3>Historia pomiarów: {{ data.type.name }}</h3>
+          <div class="table-responsive">
+            <table class="measurements-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Wartość</th>
+                  <th>Notatka</th>
+                  <th>Akcje</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of data.history; track m.id) {
+                  <tr>
+                    <td>{{ formatDate(m.measuredAt) }}</td>
+                    <td><strong>{{ m.value }} {{ data.type.unit }}</strong></td>
+                    <td>{{ m.notes || '-' }}</td>
+                    <td>
+                      <button class="btn danger sm" (click)="deleteMeasurement(m.id)">Usuń</button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="empty-state">Brak pomiarów dla wybranej kategorii.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
+    }
   }
 
   @if (isCreating()) {
@@ -82,7 +85,7 @@
           </div>
 
           <div class="form-group">
-            <label>Wartość ({{ getSelectedTypeUnit() }})</label>
+            <label>Wartość</label>
             <input type="number" step="0.1" formControlName="value" />
           </div>
 
