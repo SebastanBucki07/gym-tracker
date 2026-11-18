@@ -79,7 +79,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
         gap: 1rem;
 
         h3 {
@@ -91,6 +91,60 @@
         .block-actions {
           display: flex;
           gap: 0.5rem;
+        }
+      }
+
+      .past-performance {
+        background: rgba(0, 123, 255, 0.04);
+        border: 1px solid rgba(0, 123, 255, 0.1);
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        
+        .past-summary {
+          display: flex;
+          justify-content: space-between;
+          color: var(--text-muted, #555);
+          margin-bottom: 0.4rem;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          
+          strong {
+            color: var(--text-color, #222);
+          }
+        }
+        
+        .past-sets {
+          display: flex;
+          gap: 0.4rem;
+          overflow-x: auto;
+          padding-bottom: 0.2rem;
+          
+          &::-webkit-scrollbar {
+            height: 2px;
+          }
+          &::-webkit-scrollbar-thumb {
+            background: #ccc;
+          }
+          
+          .past-set-badge {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            color: #444;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            
+            &.warmup {
+              background: #fff8e1;
+              border-color: #ffe082;
+            }
+          }
         }
       }
 

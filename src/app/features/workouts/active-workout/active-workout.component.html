@@ -28,6 +28,25 @@
           </div>
         </div>
 
+        @if (lastPerformances().get(ex.exerciseId); as lastPerf) {
+          <div class="past-performance">
+            <div class="past-summary">
+              <span class="past-date">Ostatnio: <strong>{{ formatDateForDisplay(lastPerf.workoutDate) }}</strong></span>
+              <span class="past-stats">Max: <strong>{{ lastPerf.maxWeight }}kg</strong> | Serie: <strong>{{ lastPerf.totalSets }}</strong></span>
+            </div>
+            <div class="past-sets">
+              @for (pset of lastPerf.sets; track $index) {
+                <span class="past-set-badge" [class.warmup]="pset.isWarmup" [title]="pset.isWarmup ? 'Rozgrzewka' : 'Seria robocza'">
+                  {{ pset.weight }}kg x {{ pset.repetitions }}
+                  @if (pset.isWarmup) {
+                    <small>🔥</small>
+                  }
+                </span>
+              }
+            </div>
+          </div>
+        }
+
         <div class="sets-table-wrapper">
           <table class="sets-table">
             <thead>
